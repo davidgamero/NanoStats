@@ -1,11 +1,12 @@
 import React from 'react';
-import { StyleSheet, Text, View, TextInput, Button, TouchableOpacity, AsyncStorage } from 'react-native';
+import { StyleSheet, Text, View, TextInput, Button, TouchableOpacity, AsyncStorage, FlatList } from 'react-native';
 import autobind from 'autobind-decorator'
+import { StackNavigator } from 'react-navigation';
 
 export default class App extends React.Component {
   constructor(props){
     super(props);
-    this.state = {address: null, balance: 'loading...', lastAddress: ''};
+    this.state = {address: null, balance: 'loading...', saveAddress: ''};
   }
 
   componentDidMount(){
@@ -16,17 +17,9 @@ export default class App extends React.Component {
   _onPressFetchBalance(){
     if(this.state.address){
       this.fetchBalance(this.state.address);
+    }else{
+      this.loadAddress();
     }
-  }
-
-  @autobind
-  _onPressSaveAddress() {
-    this.saveAddress();
-  }
-
-  @autobind
-  _onPressLoadAddress(){
-    this.loadAddress();
   }
 
   fetchBalance(address) {
@@ -38,6 +31,8 @@ export default class App extends React.Component {
         }, function() {
           // do something with new state
         });
+        //got the balance now save address
+        this.saveAddress();
       })
       .catch((error) => {
         console.error(error);
@@ -55,7 +50,6 @@ export default class App extends React.Component {
     return AsyncStorage.getItem('@DatStore:address')
       .then((add) => {
         this.setState({
-          lastAddress: add,
           address: add
         },(e)=>{
             //do nothing about the errors here
@@ -72,7 +66,7 @@ export default class App extends React.Component {
           <View style={{margin: 20, width:450, alignSelf: 'center', backgroundColor: 'white'}}>
             <TextInput  
               style={{height: 40}}
-              placeholder={this.state.lastAddress ? (this.state.lastAddress.toString()): 'Address'}
+              placeholder={this.state.address ? (this.state.address.toString()): 'Address'}
               onChangeText={(text) => this.setState({'address':text})}
             />
           </View>
@@ -83,25 +77,65 @@ export default class App extends React.Component {
                 <Text style={styles.buttonText}>Fetch Balance</Text>
             </View>
           </TouchableOpacity>
-          <TouchableOpacity onPress={this._onPressSaveAddress}>
-            <View style={styles.button}>
-                <Text style={styles.buttonText}>Save Address</Text>
-            </View>
-          </TouchableOpacity>
-          <TouchableOpacity onPress={this._onPressLoadAddress}>
-            <View style={styles.button}>
-                <Text style={styles.buttonText}>Load Address</Text>
-            </View>
-          </TouchableOpacity>
-          
-          <Text style={{color: '#2196F3', fontSize: 20}}>{this.state.lastAddress ? ('Saved address: ' + this.state.lastAddress.toString()): 'No saved address'}</Text>
+          <MyList
+            data={[
+              {id: '1',name: 'uno',nick: 'juan'},
+              {id: '2',name: 'dos',nick: 'jose'},
+            ]}
+          />
         </View>
       </View>
     );
   }
 }
 
+class MyListItem extends React.PureComponent {
+  _onPress = () => {
+    this.props.onPressItem(this.props.id);
+  };
+
+  render() {
+    return (
+      <Text>migoo</Text>
+    )
+  }
+}
+
+class MyList extends React.PureComponent {
+  state = {selected: (new Map(): Map<string, boolean>)};
+
+  _keyExtractor = (item, index) => item.id;
+
+  _onPressItem = (id: string) => {
+    // updater functions are preferred for transactional updates
+    this.setState((state) => {
+      // copy the map rather than modifying state.
+      const selected = new Map(state.selected);
+      selected.set(id, !selected.get(id)); // toggle
+      return {selected};
+    });
+  };
+
+  _renderItem = ({item}) => (
+    <Text>{item.name + ' aka ' + item.nick}</Text>
+  );
+
+  render() {
+    return (
+      <FlatList
+        data={this.props.data}
+        extraData={this.state}
+        keyExtractor={this._keyExtractor}
+        renderItem={this._renderItem}
+      />
+    );
+  }
+}
+
 const styles = StyleSheet.create({
+  myListItem: {
+    height: 50,
+  },
   viewTitle: {
     color: 'white',
     fontWeight: 'bold',
