@@ -6,12 +6,15 @@ import { StackNavigator } from 'react-navigation';
 class HomeScreen extends React.Component {
   static navigationOptions = {
     title: 'NanoStats',
+    headerLeft: null,
+    headerRight: <View><Text>Add New</Text></View>,
   };
 
   constructor(props){
     super(props);
     this.state = {pairs: null};
   }
+
 
   componentDidMount(){
     //AsyncStorage.setItem('@DatStore:addresses','[]');
@@ -45,6 +48,39 @@ class HomeScreen extends React.Component {
 
   deletePair(pair) {
     console.log('deleting');
+    AsyncStorage.getItem('@DatStore:addresses')
+      .then(async (pairs) => {
+        //parse strigified object
+        data = JSON.parse(pairs);
+
+        testFunc = (p) => {
+          if(
+          p.address == pair.address &&
+          p.name == pair.name &&
+          p.cryptocurrency == pair.cryptocurrency){
+            return true;
+          }
+          return false;
+        };
+
+        //find the entry to delete
+        toDeleteIndex = data.findIndex(testFunc);
+
+        //remove the long pressed and confirmed entry
+        data.splice(toDeleteIndex,1);
+
+        try{
+          //update the stored pair list
+          AsyncStorage.setItem('@DatStore:addresses',JSON.stringify(data)).then((f) =>{
+            //reload the list of entries
+            this.loadPairs();
+          });
+
+        }catch(e){
+          console.log('Failed to delete pair');
+        }
+        
+      });
   }
 
   render() {
@@ -63,13 +99,6 @@ class HomeScreen extends React.Component {
             data={this.state.pairs}
             onLongPressItem={this.promptDeletePair}
           />
-        </View>
-        <View style={{flex:1, justifyContent: 'center'}}>
-          <TouchableOpacity onPress={async() => AsyncStorage.setItem('@DatStore:addresses','[]')} style={styles.homeNewAddressButton}>
-            <View style={styles.button}>
-                <Text style={styles.buttonText}>Purge</Text>
-            </View>
-          </TouchableOpacity>
         </View>
       </View>
     );
@@ -167,8 +196,8 @@ class NewAddressScreen extends React.Component {
           <Picker
             selectedValue={this.state.cryptocurrency}
             onValueChange={(itemValue,itemIndex) => this.setState({'cryptocurrency': itemValue})}>
-            <Picker.Item label={'Ethereum'} value={'eth'}/>
-            <Picker.Item label={'Siacoin'} value={'sc'}/>
+            <Picker.Item label={'Ethereum'} value={'ETH'}/>
+            <Picker.Item label={'Siacoin'} value={'SC'}/>
           </Picker>
           <TextInput  
               style={styles.cardText}
@@ -204,15 +233,13 @@ class AddressListItem extends React.PureComponent {
       onPress={this._onPress}
       onLongPress={this._onLongPress}>
         <View style={styles.cardItem}>
-          <Text style={styles.homeAddressItemText}>{this.props.item.address + ' : ' + this.props.item.cryptocurrency}</Text>
-        
+          <Text style={styles.homeAddressItemText}>{this.props.item.name + ' : ' + this.props.item.cryptocurrency}</Text>
+          <Text style={styles.homeAddressItemText}>{this.props.item.address}</Text>
         </View>
       </TouchableOpacity>
     )
   }
 }
-
-//<Text style={styles.homeAddressItemText}>{item.address + ' : ' + item.cryptocurrency}</Text>
 
 class AddressList extends React.PureComponent {
   state = {selected: (new Map(): Map<string, boolean>)};
@@ -343,9 +370,6 @@ class Old extends React.Component {
     );
   }
 }
-
-//the types of cryptocurrency to track
-const addressTypes = ['ETH','SC'];
 
 //style sheet resource info
 const styles = StyleSheet.create({
