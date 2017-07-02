@@ -1,9 +1,264 @@
 import React from 'react';
-import { StyleSheet, Text, View, TextInput, Button, TouchableOpacity, AsyncStorage, FlatList } from 'react-native';
+import { StyleSheet, Text, View, TextInput, Button, TouchableOpacity, AsyncStorage, FlatList, Picker, Keyboard, Alert } from 'react-native';
 import autobind from 'autobind-decorator'
 import { StackNavigator } from 'react-navigation';
 
-export default class App extends React.Component {
+class HomeScreen extends React.Component {
+  static navigationOptions = {
+    title: 'NanoStats',
+  };
+
+  constructor(props){
+    super(props);
+    this.state = {pairs: null};
+  }
+
+  componentDidMount(){
+    //AsyncStorage.setItem('@DatStore:addresses','[]');
+    this.loadPairs();
+  }
+
+  loadPairs() {
+    return AsyncStorage.getItem('@DatStore:addresses')
+      .then((pp) => {
+        this.setState({
+          pairs: JSON.parse(pp)
+        },(e)=>{
+            //do nothing about the errors here
+          });
+      });
+  }
+
+  @autobind
+  promptDeletePair(pair) {
+    Alert.alert(
+      'Delete Address?',
+      pair.name + '\n'
+      + pair.cryptocurrency + '\n'
+      + pair.address,
+      [
+        {text: 'Yes', onPress: () => this.deletePair(pair)},
+        {text: 'No'}
+      ],
+    )
+  }
+
+  deletePair(pair) {
+    console.log('deleting');
+  }
+
+  render() {
+    const { navigate } = this.props.navigation;
+    return (
+      <View style={{flex:1, justifyContent: 'center'}}>
+        <View style={{flex:1, justifyContent: 'center'}}>
+          <TouchableOpacity onPress={() => navigate('NewAddress')} style={styles.homeNewAddressButton}>
+            <View style={styles.button}>
+                <Text style={styles.buttonText}>New Address</Text>
+            </View>
+          </TouchableOpacity>
+        </View>
+        <View style={{flex: 10,}}>
+          <AddressList style={{flex: 9,}}
+            data={this.state.pairs}
+            onLongPressItem={this.promptDeletePair}
+          />
+        </View>
+        <View style={{flex:1, justifyContent: 'center'}}>
+          <TouchableOpacity onPress={async() => AsyncStorage.setItem('@DatStore:addresses','[]')} style={styles.homeNewAddressButton}>
+            <View style={styles.button}>
+                <Text style={styles.buttonText}>Purge</Text>
+            </View>
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
+  }
+}
+
+class NewAddressScreen extends React.Component {
+  static navigationOptions = {
+    title: 'New Address',
+  };
+
+  constructor(props){
+    super(props);
+    this.state = {newAddress: null,cryptocurrency: 'ETH',name:null};
+  }
+
+  componentDidMount(){
+    this.loadAddresses();
+    console.log('mounted');
+
+  }
+
+  loadAddresses() {
+    return AsyncStorage.getItem('@DatStore:addresses')
+      .then((add) => {
+        this.setState({
+          addresses: add
+        },(e)=>{
+            //do nothing about the errors here
+          });
+      });
+  }
+
+  saveNewAddressAndHome() {
+    const { navigate } = this.props.navigation
+
+    console.log('new address pressed');
+
+    AsyncStorage.getItem('@DatStore:addresses')
+      .then(async (pairs) => {
+        //parse strigified object
+        data = JSON.parse(pairs);
+
+        //the new currency-address pair
+        newPair = {cryptocurrency: this.state.cryptocurrency,address: this.state.newAddress,name: this.state.name};
+        console.log(newPair);
+        
+        //see wtf it is
+        console.log(data);
+        
+        //if there is already a pair array
+        if(data){
+          //append the new pair to the end
+          try {
+            data.push(newPair);
+          }catch (e){
+            console.log('Failed to append new data pair');
+          }
+        }else{
+          //no data, make the array
+          data=[newPair];
+        }
+
+        try{
+          //update the stored pair list
+          await AsyncStorage.setItem('@DatStore:addresses',JSON.stringify(data));
+
+          //go back home
+          navigate('Home');
+
+          //dismiss the keyboard
+          try {
+            Keyboard.dismiss();
+          }catch(e){
+            console.log('Failed to dismiss Keyboard');
+          }
+
+        }catch(e){
+          console.log('Failed to  store updated addresses or navigate to Home');
+        }
+        
+      });
+  }
+
+
+  render() {
+    return (
+      <View style={{flex:1, }}>
+        <View style={styles.cardItem}>
+          <TextInput  
+              style={styles.cardText}
+              placeholder={'Account Nickname'}
+              onChangeText={(name) => this.setState({'name': name})}
+            />
+          <Picker
+            selectedValue={this.state.cryptocurrency}
+            onValueChange={(itemValue,itemIndex) => this.setState({'cryptocurrency': itemValue})}>
+            <Picker.Item label={'Ethereum'} value={'eth'}/>
+            <Picker.Item label={'Siacoin'} value={'sc'}/>
+          </Picker>
+          <TextInput  
+              style={styles.cardText}
+              placeholder={'Address'}
+              onChangeText={(address) => this.setState({'newAddress': address})}
+            />
+        </View>
+        <View style={styles.homeNewAddressButton}>
+          <TouchableOpacity onPress={() => this.saveNewAddressAndHome()} style={styles.homeNewAddressButton}>
+              <View style={styles.button}>
+                  <Text style={styles.buttonText}>Add Address</Text>
+              </View>
+            </TouchableOpacity>
+        </View>
+      </View>
+    );
+  }
+}
+
+class AddressListItem extends React.PureComponent {
+  _onPress = () => {
+    this.props.onPressItem(this.props.address);
+  };
+
+  _onLongPress = () => {
+    this.props.onLongPressItem(this.props.item);
+  };
+
+  render() {
+    console.log(this.props.item);
+    return (
+      <TouchableOpacity
+      onPress={this._onPress}
+      onLongPress={this._onLongPress}>
+        <View style={styles.cardItem}>
+          <Text style={styles.homeAddressItemText}>{this.props.item.address + ' : ' + this.props.item.cryptocurrency}</Text>
+        
+        </View>
+      </TouchableOpacity>
+    )
+  }
+}
+
+//<Text style={styles.homeAddressItemText}>{item.address + ' : ' + item.cryptocurrency}</Text>
+
+class AddressList extends React.PureComponent {
+  state = {selected: (new Map(): Map<string, boolean>)};
+
+  _keyExtractor = (item, index) => item.address;
+
+  _onPressItem = (id: string) => {
+    console.log('item pressed');
+    // updater functions are preferred for transactional updates
+    this.setState((state) => {
+      // copy the map rather than modifying state.
+      const selected = new Map(state.selected);
+      selected.set(id, !selected.get(id)); // toggle
+      return {selected};
+    });
+  };
+
+  _onLongPressItem = (pair) => {
+    console.log('tryna delete');
+    console.log(pair);
+    this.props.onLongPressItem(pair);
+  };
+
+  _renderItem = ({item}) => (
+    <AddressListItem
+      props={item}
+      item={item}
+      onPressItem={this._onPressItem}
+      onLongPressItem={this._onLongPressItem}
+      selected={!!this.state.selected.get(item.id)}
+    />
+  );
+
+  render() {
+    return (
+      <FlatList
+        data={this.props.data}
+        extraData={this.state}
+        keyExtractor={this._keyExtractor}
+        renderItem={this._renderItem}
+      />
+    );
+  }
+}
+
+class Old extends React.Component {
   constructor(props){
     super(props);
     this.state = {address: null, balance: 'loading...', saveAddress: ''};
@@ -89,50 +344,42 @@ export default class App extends React.Component {
   }
 }
 
-class MyListItem extends React.PureComponent {
-  _onPress = () => {
-    this.props.onPressItem(this.props.id);
-  };
+//the types of cryptocurrency to track
+const addressTypes = ['ETH','SC'];
 
-  render() {
-    return (
-      <Text>migoo</Text>
-    )
-  }
-}
-
-class MyList extends React.PureComponent {
-  state = {selected: (new Map(): Map<string, boolean>)};
-
-  _keyExtractor = (item, index) => item.id;
-
-  _onPressItem = (id: string) => {
-    // updater functions are preferred for transactional updates
-    this.setState((state) => {
-      // copy the map rather than modifying state.
-      const selected = new Map(state.selected);
-      selected.set(id, !selected.get(id)); // toggle
-      return {selected};
-    });
-  };
-
-  _renderItem = ({item}) => (
-    <Text>{item.name + ' aka ' + item.nick}</Text>
-  );
-
-  render() {
-    return (
-      <FlatList
-        data={this.props.data}
-        extraData={this.state}
-        keyExtractor={this._keyExtractor}
-        renderItem={this._renderItem}
-      />
-    );
-  }
-}
-
+//style sheet resource info
 const styles = StyleSheet.create({
+  cardText: {
+    margin: 5,
+    padding: 5,
+    fontSize: 15,
+  },
+  cardItem: {
+    margin: 10,
+    marginBottom: 0,
+    padding: 10,
+    backgroundColor: 'white',
+    borderRadius: 5,
+  },
+  homeNewAddressButton: {
+    
+  },
+  homeAddressItemText: {
+
+  },
+  button: {
+    marginTop: 20,
+    margin: 10,
+    alignItems: 'center',
+    backgroundColor: '#2196F3',
+    borderRadius: 5
+  },
+  buttonText: {
+    padding: 5,
+    color: 'white',
+    fontSize: 20
+  },
+//older
   myListItem: {
     height: 50,
   },
@@ -148,18 +395,6 @@ const styles = StyleSheet.create({
     fontSize: 30,
     alignSelf: 'center',
   },
-  button: {
-    marginBottom: 30,
-    width: 260,
-    alignItems: 'center',
-    backgroundColor: '#2196F3',
-    borderRadius: 5
-  },
-  buttonText: {
-    padding: 20,
-    color: 'white',
-    fontSize: 20
-  },
   addressInput: {
     height: 40,
     color: 'black',
@@ -173,3 +408,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
 });
+
+const App = StackNavigator({
+  Home: {screen: HomeScreen},
+  NewAddress: {screen: NewAddressScreen},
+});
+
+export default App;
