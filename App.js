@@ -1,14 +1,79 @@
 import React from 'react';
-import { StyleSheet, Text, View, TextInput, Button, TouchableOpacity, AsyncStorage, FlatList, Picker, Keyboard, Alert } from 'react-native';
+import { StyleSheet, Text, View, TextInput, Button, TouchableOpacity, AsyncStorage, FlatList, Picker, Keyboard, Alert, Platform } from 'react-native';
 import autobind from 'autobind-decorator'
 import { StackNavigator } from 'react-navigation';
 
+//style sheet resource info
+const styles = StyleSheet.create({
+  cardTextInput: {
+    height: (Platform.OS == 'android' ? 40 : 20),
+  },
+  headerTouchableText: {
+    marginLeft: 20,
+    marginRight: 20,
+    color: '#2196F3',
+  },
+  cardText: {
+    margin: 5,
+    padding: 5,
+    fontSize: 15,
+  },
+  cardItem: {
+    margin: 10,
+    marginBottom: 0,
+    padding: 10,
+    backgroundColor: 'white',
+    borderRadius: 5,
+  },
+  homeNewAddressButton: {
+    
+  },
+  homeAddressItemText: {
+
+  },
+  button: {
+    marginTop: 20,
+    margin: 10,
+    alignItems: 'center',
+    backgroundColor: '#2196F3',
+    borderRadius: 5
+  },
+  buttonText: {
+    padding: 5,
+    color: 'white',
+    fontSize: 20
+  },
+//older
+  myListItem: {
+    height: 50,
+  },
+  viewTitle: {
+    color: 'white',
+    fontWeight: 'bold',
+    fontSize: 50,
+    alignSelf: 'center',
+  },
+  balanceText: {
+    color: 'white',
+    fontWeight: 'bold',
+    fontSize: 30,
+    alignSelf: 'center',
+  },
+  addressInput: {
+    height: 40,
+    color: 'black',
+    backgroundColor: 'white',
+    alignSelf: 'center',
+  },
+  container: {
+    flex: 1,
+    backgroundColor: '#fff',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+});
+
 class HomeScreen extends React.Component {
-  static navigationOptions = {
-    title: 'NanoStats',
-    headerLeft: null,
-    headerRight: <View><Text>Add New</Text></View>,
-  };
 
   constructor(props){
     super(props);
@@ -83,6 +148,12 @@ class HomeScreen extends React.Component {
       });
   }
 
+  @autobind
+  navToAddressStats(pair){
+    const { navigate } = this.props.navigation;
+    navigate('AddressStats',pair);
+  }
+
   render() {
     const { navigate } = this.props.navigation;
     return (
@@ -97,6 +168,7 @@ class HomeScreen extends React.Component {
         <View style={{flex: 10,}}>
           <AddressList style={{flex: 9,}}
             data={this.state.pairs}
+            onPressItem={this.navToAddressStats}
             onLongPressItem={this.promptDeletePair}
           />
         </View>
@@ -189,7 +261,7 @@ class NewAddressScreen extends React.Component {
       <View style={{flex:1, }}>
         <View style={styles.cardItem}>
           <TextInput  
-              style={styles.cardText}
+              style={styles.cardText, styles.cardTextInput}
               placeholder={'Account Nickname'}
               onChangeText={(name) => this.setState({'name': name})}
             />
@@ -197,10 +269,10 @@ class NewAddressScreen extends React.Component {
             selectedValue={this.state.cryptocurrency}
             onValueChange={(itemValue,itemIndex) => this.setState({'cryptocurrency': itemValue})}>
             <Picker.Item label={'Ethereum'} value={'ETH'}/>
-            <Picker.Item label={'Siacoin'} value={'SC'}/>
+            <Picker.Item label={'Siacoin'} value={'SIA'}/>
           </Picker>
           <TextInput  
-              style={styles.cardText}
+              style={styles.cardText, styles.cardTextInput}
               placeholder={'Address'}
               onChangeText={(address) => this.setState({'newAddress': address})}
             />
@@ -219,7 +291,7 @@ class NewAddressScreen extends React.Component {
 
 class AddressListItem extends React.PureComponent {
   _onPress = () => {
-    this.props.onPressItem(this.props.address);
+    this.props.onPressItem(this.props.item);
   };
 
   _onLongPress = () => {
@@ -246,15 +318,9 @@ class AddressList extends React.PureComponent {
 
   _keyExtractor = (item, index) => item.address;
 
-  _onPressItem = (id: string) => {
+  _onPressItem = (pair) => {
     console.log('item pressed');
-    // updater functions are preferred for transactional updates
-    this.setState((state) => {
-      // copy the map rather than modifying state.
-      const selected = new Map(state.selected);
-      selected.set(id, !selected.get(id)); // toggle
-      return {selected};
-    });
+    this.props.onPressItem(pair);
   };
 
   _onLongPressItem = (pair) => {
@@ -284,6 +350,55 @@ class AddressList extends React.PureComponent {
     );
   }
 }
+
+
+class AddressStatsScreen extends React.Component {
+  static navigationOptions = ({navigation}) => ({
+    title: `${navigation.state.params.cryptocurrency + ' : ' + navigation.state.params.name}`,
+  });
+
+  constructor(props){
+    super(props);
+    this.state = {balance: ' '};
+  }
+
+  componentDidMount(){
+    this.fetchBalance();
+  }
+
+  fetchBalance() {
+    const { params } = this.props.navigation.state;
+    return fetch('https://api.nanopool.org/v1/' + params.cryptocurrency.toString().toLowerCase() + '/balance/' + params.address.toString())
+      .then((response) => response.json())
+      .then((responseJson) => {
+        this.setState({
+          //update the balance state
+          balance: responseJson.data ? responseJson.data : 'Account not found',
+        }, function() {
+          // do something with new state
+        });
+        //got the balance
+        console.log(responseJson);
+      })
+      .catch((error) => {
+        console.error(error);
+      });
+  }
+
+  render() {
+    const { params } = this.props.navigation.state;
+    return (
+      <View style={{flex:1, }}>
+        <View style={styles.cardItem}>
+          <Text>
+            {this.state.balance}
+          </Text>
+        </View>
+      </View>
+    );
+  }
+}
+
 
 class Old extends React.Component {
   constructor(props){
@@ -371,71 +486,31 @@ class Old extends React.Component {
   }
 }
 
-//style sheet resource info
-const styles = StyleSheet.create({
-  cardText: {
-    margin: 5,
-    padding: 5,
-    fontSize: 15,
-  },
-  cardItem: {
-    margin: 10,
-    marginBottom: 0,
-    padding: 10,
-    backgroundColor: 'white',
-    borderRadius: 5,
-  },
-  homeNewAddressButton: {
-    
-  },
-  homeAddressItemText: {
 
-  },
-  button: {
-    marginTop: 20,
-    margin: 10,
-    alignItems: 'center',
-    backgroundColor: '#2196F3',
-    borderRadius: 5
-  },
-  buttonText: {
-    padding: 5,
-    color: 'white',
-    fontSize: 20
-  },
-//older
-  myListItem: {
-    height: 50,
-  },
-  viewTitle: {
-    color: 'white',
-    fontWeight: 'bold',
-    fontSize: 50,
-    alignSelf: 'center',
-  },
-  balanceText: {
-    color: 'white',
-    fontWeight: 'bold',
-    fontSize: 30,
-    alignSelf: 'center',
-  },
-  addressInput: {
-    height: 40,
-    color: 'black',
-    backgroundColor: 'white',
-    alignSelf: 'center',
-  },
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});
 
 const App = StackNavigator({
-  Home: {screen: HomeScreen},
-  NewAddress: {screen: NewAddressScreen},
+  Home: {
+    screen: HomeScreen,
+    navigationOptions: ({navigate}) => ({
+      title: 'NanoStats',
+      headerLeft: null,
+      // header: ({navigate}) => ({
+      //   right: (
+      //     <TouchableOpacity onPress={() => {navigate('NewAddress')} }>
+      //       <Text style={styles.headerTouchableText}>
+      //         Add New
+      //       </Text>
+      //     </TouchableOpacity>
+      //   ),
+      // }),
+    }),
+  },
+  NewAddress: {
+    screen: NewAddressScreen,
+  },
+  AddressStats: {
+    screen: AddressStatsScreen,
+  },
 });
 
 export default App;
