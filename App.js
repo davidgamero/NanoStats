@@ -15,7 +15,7 @@ const styles = StyleSheet.create({
   },
   cardText: {
     margin: 5,
-    padding: 5,
+    padding: 0,
     fontSize: 15,
   },
   cardItem: {
@@ -72,6 +72,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
 });
+
+
+const HashrateUnits = {
+  ETH: 'Mh/s',
+  SIA: 'Mh/s,'
+}
 
 class HomeScreen extends React.Component {
 
@@ -359,16 +365,17 @@ class AddressStatsScreen extends React.Component {
 
   constructor(props){
     super(props);
-    this.state = {balance: ' '};
+    this.state = {balance: ' ',avghashrate: null};
   }
 
   componentDidMount(){
-    this.fetchBalance();
+    this.fetchInfo();
   }
 
-  fetchBalance() {
+  fetchInfo() {
     const { params } = this.props.navigation.state;
-    return fetch('https://api.nanopool.org/v1/' + params.cryptocurrency.toString().toLowerCase() + '/balance/' + params.address.toString())
+    //fetch balance
+    fetch('https://api.nanopool.org/v1/' + params.cryptocurrency.toString().toLowerCase() + '/balance/' + params.address.toString())
       .then((response) => response.json())
       .then((responseJson) => {
         this.setState({
@@ -383,6 +390,32 @@ class AddressStatsScreen extends React.Component {
       .catch((error) => {
         console.error(error);
       });
+    //fetch average hashrates
+    fetch('https://api.nanopool.org/v1/' + params.cryptocurrency.toString().toLowerCase() + '/avghashrate/' + params.address.toString())
+      .then((response) => response.json())
+      .then((responseJson) => {
+        this.setState({
+          //update the balance state
+          avghashrate: responseJson.data,
+        }, function() {
+          // do something with new state
+        });
+        //got the balance
+        console.log(responseJson);
+      })
+      .catch((error) => {
+        console.error(error);
+      });
+  }
+
+  getHashratesString(params){
+    times = [1,3,6,12,24];
+    s = 'Average Hashrates:';
+    for(var i = 0;i < times.length; i++ ){
+     s = s + '\n' + times[i].toString().padStart(3) + ': ' + (this.state.avghashrate ? Math.round(this.state.avghashrate['h' + times[i].toString()]) : '...') + HashrateUnits[params.cryptocurrency]
+    };
+    console.log('rannn');
+    return s;
   }
 
   render() {
@@ -390,102 +423,19 @@ class AddressStatsScreen extends React.Component {
     return (
       <View style={{flex:1, }}>
         <View style={styles.cardItem}>
-          <Text>
-            {this.state.balance}
+          <Text style={styles.cardText}>
+            {'Balance : ' + this.state.balance}
+          </Text>
+        </View>
+        <View style={styles.cardItem}>
+          <Text style={styles.cardText}>
+            {this.getHashratesString(params)}
           </Text>
         </View>
       </View>
     );
   }
 }
-
-
-class Old extends React.Component {
-  constructor(props){
-    super(props);
-    this.state = {address: null, balance: 'loading...', saveAddress: ''};
-  }
-
-  componentDidMount(){
-    this.loadAddress();
-  }
-
-    @autobind
-  _onPressFetchBalance(){
-    if(this.state.address){
-      this.fetchBalance(this.state.address);
-    }else{
-      this.loadAddress();
-    }
-  }
-
-  fetchBalance(address) {
-    return fetch('https://api.nanopool.org/v1/eth/balance/' + address.toString())
-      .then((response) => response.json())
-      .then((responseJson) => {
-        this.setState({
-          balance: responseJson.data,
-        }, function() {
-          // do something with new state
-        });
-        //got the balance now save address
-        this.saveAddress();
-      })
-      .catch((error) => {
-        console.error(error);
-      });
-  }
-
-  saveAddress() {
-    add = this.state.address;
-    if(add){
-      AsyncStorage.setItem('@DatStore:address',add);
-    }
-  }
-
-  loadAddress() {
-    return AsyncStorage.getItem('@DatStore:address')
-      .then((add) => {
-        this.setState({
-          address: add
-        },(e)=>{
-            //do nothing about the errors here
-          });
-      });
-  }
-
-  render() {
-    return (
-      <View style={{flex:1, justifyContent: 'center'}}>
-        <View style={{flex:1, backgroundColor: 'powderblue',justifyContent: 'center'}}>
-          <Text style={styles.viewTitle}>NanoStats</Text>
-          <Text style={styles.balanceText}>{this.state.balance}</Text>
-          <View style={{margin: 20, width:450, alignSelf: 'center', backgroundColor: 'white'}}>
-            <TextInput  
-              style={{height: 40}}
-              placeholder={this.state.address ? (this.state.address.toString()): 'Address'}
-              onChangeText={(text) => this.setState({'address':text})}
-            />
-          </View>
-        </View>
-        <View style={{flex:1, alignItems: 'center'}}>
-          <TouchableOpacity onPress={this._onPressFetchBalance} style={{marginTop: 20}}>
-            <View style={styles.button}>
-                <Text style={styles.buttonText}>Fetch Balance</Text>
-            </View>
-          </TouchableOpacity>
-          <MyList
-            data={[
-              {id: '1',name: 'uno',nick: 'juan'},
-              {id: '2',name: 'dos',nick: 'jose'},
-            ]}
-          />
-        </View>
-      </View>
-    );
-  }
-}
-
 
 
 const App = StackNavigator({
