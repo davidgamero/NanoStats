@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, Text, View, TextInput, Button, TouchableOpacity, AsyncStorage, FlatList, Picker, Keyboard, Alert, Platform } from 'react-native';
+import { StyleSheet, Text, View, TextInput, Button, TouchableOpacity, AsyncStorage, FlatList, Picker, Keyboard, Alert, Platform, RefreshControl } from 'react-native';
 import autobind from 'autobind-decorator'
 import { StackNavigator } from 'react-navigation';
 
@@ -83,13 +83,65 @@ class HomeScreen extends React.Component {
 
   constructor(props){
     super(props);
-    this.state = {pairs: null};
+    this.state = {
+      pairs: null,
+    };
+  }
+
+  @autobind
+  fetchData(){
+    for(var i = 0; i<this.state.pairs.length; i++){
+      //once per pair
+      if(this.state.pairs[i].cryptocurrency == 'ETH'){
+        fetch('https://etherchain.org/api/account/' + this.state.pairs[i].address)
+          .then((response) => response.json())
+          .then((responseJson) => {
+            p = this.state.pairs;
+//            console.log(responseJson);
+
+            this.addBalanceData(responseJson.data);
+          })
+          .catch((error) => {
+            console.error(error);
+          }
+        );
+      }
+    }
+  }
+
+  @autobind
+  addBalanceData(data){
+    console.log('before');
+    console.log(this.state.pairs);
+
+    balance = data[0] ? data[0].balance : null;
+    address = data[0] ? data[0].address : null;
+//    console.log(data[0]);
+
+    p = this.state.pairs;
+    for(var i = 0; i<p.length; i++){
+      //once per pair
+      if(p[i].address == address){
+        //add address to the pair object in the pairs array
+        p[i].balance = balance;
+//        console.log('added balance');
+//        console.log(p);
+      }
+    }
+    this.setState({
+      pairs: p,
+    });
+    console.log('after');
+    console.log(this.state.pairs);
   }
 
 
   componentDidMount(){
     //AsyncStorage.setItem('@DatStore:addresses','[]');
-    this.loadPairs();
+    this.loadPairs().then(() =>{
+      //after pairs are loaded
+      this.fetchData()
+    });
   }
 
   loadPairs() {
@@ -174,8 +226,10 @@ class HomeScreen extends React.Component {
         <View style={{flex: 10,}}>
           <AddressList style={{flex: 9,}}
             data={this.state.pairs}
+            extraData={this.state}
             onPressItem={this.navToAddressStats}
             onLongPressItem={this.promptDeletePair}
+            onRefresh={this.fetchData}
           />
         </View>
       </View>
@@ -213,15 +267,22 @@ class NewAddressScreen extends React.Component {
   saveNewAddressAndHome() {
     const { navigate } = this.props.navigation
 
-    console.log('new address pressed');
-
     AsyncStorage.getItem('@DatStore:addresses')
       .then(async (pairs) => {
         //parse strigified object
         data = JSON.parse(pairs);
 
         //the new currency-address pair
-        newPair = {cryptocurrency: this.state.cryptocurrency,address: this.state.newAddress,name: this.state.name};
+        //take everything after last slash
+        var parsed;
+        try{
+          var n = this.state.newAddress.lastIndexOf('/');
+          parsed = this.state.newAddress.substring(n + 1);
+        }catch(e){
+          console.log('Error parsing new address string')
+          console.log(e);
+        }
+        newPair = {cryptocurrency: this.state.cryptocurrency,address: (parsed == -1)? this.state.newAddress: parsed,name: this.state.name};
         console.log(newPair);
         
         //see wtf it is
@@ -306,12 +367,14 @@ class AddressListItem extends React.PureComponent {
 
   render() {
     console.log(this.props.item);
+    console.log(this.props.balance);
     return (
       <TouchableOpacity
       onPress={this._onPress}
       onLongPress={this._onLongPress}>
         <View style={styles.cardItem}>
           <Text style={styles.homeAddressItemText}>{this.props.item.name + ' : ' + this.props.item.cryptocurrency}</Text>
+          <Text style={styles.homeAddressItemText}>{this.props.balance ? 'Balance: ' + wei2Rounded(this.props.balance,4) : 'No balance found'}</Text>
           <Text style={styles.homeAddressItemText}>{this.props.item.address}</Text>
         </View>
       </TouchableOpacity>
@@ -320,12 +383,15 @@ class AddressListItem extends React.PureComponent {
 }
 
 class AddressList extends React.PureComponent {
-  state = {selected: (new Map(): Map<string, boolean>)};
+  state = {
+    selected: (new Map(): Map<string, boolean>),
+    refreshing: false,
+  };
 
   _keyExtractor = (item, index) => item.address;
 
   _onPressItem = (pair) => {
-    console.log('item pressed');
+//    console.log('item pressed');
     this.props.onPressItem(pair);
   };
 
@@ -335,10 +401,19 @@ class AddressList extends React.PureComponent {
     this.props.onLongPressItem(pair);
   };
 
+  _onRefresh() {
+    this.setState({refreshing: true});
+    this.props.onRefresh();
+    //fetchData().then(() => {
+    this.setState({refreshing: false});
+    //});
+  }
+
   _renderItem = ({item}) => (
     <AddressListItem
       props={item}
       item={item}
+      balance={item.balance}
       onPressItem={this._onPressItem}
       onLongPressItem={this._onLongPressItem}
       selected={!!this.state.selected.get(item.id)}
@@ -352,6 +427,12 @@ class AddressList extends React.PureComponent {
         extraData={this.state}
         keyExtractor={this._keyExtractor}
         renderItem={this._renderItem}
+        refreshControl={
+          <RefreshControl
+            refreshing={this.state.refreshing}
+            onRefresh={this._onRefresh.bind(this)}
+          />
+        }
       />
     );
   }
@@ -411,10 +492,14 @@ class AddressStatsScreen extends React.Component {
   getHashratesString(params){
     times = [1,3,6,12,24];
     s = 'Average Hashrates:';
+    console.log(params);
     for(var i = 0;i < times.length; i++ ){
-     s = s + '\n' + times[i].toString().padStart(3) + ': ' + (this.state.avghashrate ? Math.round(this.state.avghashrate['h' + times[i].toString()]) : '...') + HashrateUnits[params.cryptocurrency]
+      try {
+        s = s + '\n' + times[i].toString() + ': ' + (this.state.avghashrate ? Math.round(this.state.avghashrate['h' + times[i].toString()]) : '...') + HashrateUnits[params.cryptocurrency]
+      } catch (err){
+        console.log(err);
+      }
     };
-    console.log('rannn');
     return s;
   }
 
@@ -424,7 +509,12 @@ class AddressStatsScreen extends React.Component {
       <View style={{flex:1, }}>
         <View style={styles.cardItem}>
           <Text style={styles.cardText}>
-            {'Balance : ' + this.state.balance}
+            {'Balance : ' + this.state.balance + '\n' + params.address}
+          </Text>
+        </View>
+        <View style={styles.cardItem}>
+          <Text style={styles.cardText}>
+            {this.getHashratesString(params)}
           </Text>
         </View>
         <View style={styles.cardItem}>
@@ -437,6 +527,18 @@ class AddressStatsScreen extends React.Component {
   }
 }
 
+/** Convert wei to ethereum
+*/
+function wei2Eth(wei){
+  w = parseFloat(wei);
+  return (w / (1e18));
+}
+
+/** Convert wei to ethereum and round at digits
+*/
+function wei2Rounded(wei,digits){
+  return (wei2Eth(wei)).toFixed(digits)
+}
 
 const App = StackNavigator({
   Home: {
