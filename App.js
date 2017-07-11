@@ -115,8 +115,8 @@ class HomeScreen extends React.Component {
 
   @autobind
   addBalanceData(data){
-    console.log('before');
-    console.log(this.state.pairs);
+    //console.log('before');
+    //console.log(this.state.pairs);
 
     balance = data[0] ? data[0].balance : null;
     address = data[0] ? data[0].address : null;
@@ -135,8 +135,8 @@ class HomeScreen extends React.Component {
     this.setState({
       pairs: p,
     });
-    console.log('after');
-    console.log(this.state.pairs);
+    //console.log('after');
+    //console.log(this.state.pairs);
   }
 
 
@@ -370,8 +370,8 @@ class AddressListItem extends React.PureComponent {
   };
 
   render() {
-    console.log(this.props.item);
-    console.log(this.props.balance);
+    //console.log(this.props.item);
+    //console.log(this.props.balance);
     return (
       <TouchableOpacity
       onPress={this._onPress}
@@ -484,9 +484,9 @@ class AddressStatsScreen extends React.Component {
           avghashrate: responseJson.data,
         }, function() {
           // do something with new state
+          this.parseAvgHashrates()
         });
-        //got the balance
-        console.log(responseJson);
+        //console.log(responseJson);
       })
       .catch((error) => {
         console.error(error);
@@ -496,7 +496,7 @@ class AddressStatsScreen extends React.Component {
   getHashratesString(params){
     times = [1,3,6,12,24];
     s = 'Average Hashrates:';
-    console.log(params);
+    //console.log(params);
     for(var i = 0;i < times.length; i++ ){
       try {
         s = s + '\n' + times[i].toString() + ': ' + (this.state.avghashrate ? Math.round(this.state.avghashrate['h' + times[i].toString()]) : '...') + HashrateUnits[params.cryptocurrency]
@@ -507,7 +507,10 @@ class AddressStatsScreen extends React.Component {
     return s;
   }
 
-  getHashratesJSX(params){
+  @autobind
+  parseAvgHashrates(){
+    const { params } = this.props.navigation.state;
+
     times = [1,3,6,12,24];
     s = [];
     //console.log(params);
@@ -515,19 +518,19 @@ class AddressStatsScreen extends React.Component {
     //declare hash max and min at function scope
     hashMax = null;
     hashMin = null;
-
     if(this.state.avghashrate){
       //set first hashrate to both min and max
-      hashMax = this.state.avghashrate['h' + times[0].toString()];
-      hashMin = this.state.avghashrate['h' + times[0].toString()];
+      hashMax = parseInt(this.state.avghashrate['h' + times[0].toString()]);
+      hashMin = parseInt(this.state.avghashrate['h' + times[0].toString()]);
       for(var i = 1;i < times.length; i++ ){
        
         //next hashrate
-        h = this.state.avghashrate['h' + times[0].toString()];
-        hashMax = h > hashMax ? h : hashMax;
-        hashMin = h < hashMin ? h : hashMin; 
+        h = parseInt(this.state.avghashrate['h' + times[i].toString()]);
+        hashMax = h > parseInt(hashMax) ? h : hashMax;
+        hashMin = h < parseInt(hashMin) ? h : hashMin; 
       }
     }
+
     //generate the average hashrate line objects
     for(var i = 0;i < times.length; i++ ){
       s.push({
@@ -536,26 +539,17 @@ class AddressStatsScreen extends React.Component {
         rateDispPercent: (this.state.avghashrate ? (this.state.avghashrate['h' + times[i].toString()]) : 0)/(hashMax ? hashMax : 1)
       });
     };
-    return (
-      <View>
-        <Text>{'Average Hashrates:'}</Text>
-        {s.map(function(rateSet,index){
-          return (<View style={{flexDirection: 'row'}} key={index}>
-              <View style={{flex: 1, marginRight: 5}}>
-                <Text style={{textAlign: 'right',}}>{rateSet.time + 'h'}</Text>
-              </View>
-              <View style={{flex: 2}}>
-                <Text style={{textAlign: 'left',}}>{rateSet.rateText}</Text>
-              </View>
-              <View style={{flex: 8,margin: 2,flexDirection: 'row'}}>
-                <View style={{backgroundColor:'#2196F3', flex: rateSet.rateDispPercent * 10.0}}/>
-                <View style={{backgroundColor:'white',flex: 10.0 - (rateSet.rateDispPercent * 10.0)}}/>
-              </View>
-            </View>
-          )
-        })}
-      </View>
-    )
+    this.setState(
+      (prev)=>{
+        return({
+          parsedHashrates: s
+        })
+      },
+      (a)=>{
+        console.log('parsed hash')
+        console.log(this.state.parsedHashrates);
+      }
+    );
   }
 
   render() {
@@ -569,10 +563,46 @@ class AddressStatsScreen extends React.Component {
           </Text>
         </View>
         <View style={styles.cardItem}>
-          {this.getHashratesJSX(params)}
+          <HashratesBarChart
+            hashrates={this.state.parsedHashrates}/>
         </View>
       </RefreshableScrollView>
     );
+  }
+}
+
+/** 
+props:
+  hashrates - array of hashrates objects
+*/
+class HashratesBarChart extends React.Component {
+  constructor(props) {
+    super(props);
+  }
+
+  render() {
+    return (
+      <View>
+        <Text>{'Average Hashrates:'}</Text>
+        {this.props.hashrates ? this.props.hashrates.map(function(rateSet,index){
+          return (
+            <View style={{flexDirection: 'row'}} key={index}>
+              <View style={{flex: 1, marginRight: 5}}>
+                <Text style={{textAlign: 'right',}}>{rateSet.time + 'h'}</Text>
+              </View>
+              <View style={{flex: 3}}>
+                <Text style={{textAlign: 'left',}}>{rateSet.rateText}</Text>
+              </View>
+              <View style={{flex: 8,margin: 2,flexDirection: 'row'}}>                
+                <View style={{backgroundColor:'white',flex: 10.0 - (rateSet.rateDispPercent * 10.0)}}/>
+                <View style={{backgroundColor:'#2196F3', flex: rateSet.rateDispPercent * 10.0}}/>
+              </View>
+            </View>
+          )})
+        : null
+        }
+      </View>
+    )
   }
 }
 
