@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, Text, View, TextInput, Button, TouchableOpacity, AsyncStorage, FlatList, Picker, Keyboard, Alert, Platform, RefreshControl } from 'react-native';
+import { StyleSheet, Text, View, TextInput, Button, TouchableOpacity, AsyncStorage, FlatList, Picker, Keyboard, Alert, Platform, RefreshControl, ScrollView } from 'react-native';
 import autobind from 'autobind-decorator'
 import { StackNavigator } from 'react-navigation';
 
@@ -92,19 +92,23 @@ class HomeScreen extends React.Component {
   fetchData(){
     for(var i = 0; i<this.state.pairs.length; i++){
       //once per pair
-      if(this.state.pairs[i].cryptocurrency == 'ETH'){
-        fetch('https://etherchain.org/api/account/' + this.state.pairs[i].address)
-          .then((response) => response.json())
-          .then((responseJson) => {
-            p = this.state.pairs;
-//            console.log(responseJson);
+      try{
+        if(this.state.pairs[i].cryptocurrency == 'ETH'){
+          fetch('https://etherchain.org/api/account/' + this.state.pairs[i].address)
+            .then((response) => response.json())
+            .then((responseJson) => {
+              p = this.state.pairs;
+  //            console.log(responseJson);
 
-            this.addBalanceData(responseJson.data);
-          })
-          .catch((error) => {
-            console.error(error);
-          }
-        );
+              this.addBalanceData(responseJson.data);
+            })
+            .catch((error) => {
+              console.error(error);
+            }
+          );
+        }
+      } catch(e){
+        console.log('Error parsing JSON for balance data');
       }
     }
   }
@@ -503,26 +507,105 @@ class AddressStatsScreen extends React.Component {
     return s;
   }
 
+  getHashratesJSX(params){
+    times = [1,3,6,12,24];
+    s = [];
+    //console.log(params);
+
+    //declare hash max and min at function scope
+    hashMax = null;
+    hashMin = null;
+
+    if(this.state.avghashrate){
+      //set first hashrate to both min and max
+      hashMax = this.state.avghashrate['h' + times[0].toString()];
+      hashMin = this.state.avghashrate['h' + times[0].toString()];
+      for(var i = 1;i < times.length; i++ ){
+       
+        //next hashrate
+        h = this.state.avghashrate['h' + times[0].toString()];
+        hashMax = h > hashMax ? h : hashMax;
+        hashMin = h < hashMin ? h : hashMin; 
+      }
+    }
+    //generate the average hashrate line objects
+    for(var i = 0;i < times.length; i++ ){
+      s.push({
+        time: times[i].toString(),
+        rateText: (this.state.avghashrate ? Math.round(this.state.avghashrate['h' + times[i].toString()]) : '...') + HashrateUnits[params.cryptocurrency],
+        rateDispPercent: (this.state.avghashrate ? (this.state.avghashrate['h' + times[i].toString()]) : 0)/(hashMax ? hashMax : 1)
+      });
+    };
+    return (
+      <View>
+        <Text>{'Average Hashrates:'}</Text>
+        {s.map(function(rateSet,index){
+          return (<View style={{flexDirection: 'row'}} key={index}>
+              <View style={{flex: 1, marginRight: 5}}>
+                <Text style={{textAlign: 'right',}}>{rateSet.time + 'h'}</Text>
+              </View>
+              <View style={{flex: 2}}>
+                <Text style={{textAlign: 'left',}}>{rateSet.rateText}</Text>
+              </View>
+              <View style={{flex: 8,margin: 2,flexDirection: 'row'}}>
+                <View style={{backgroundColor:'#2196F3', flex: rateSet.rateDispPercent * 10.0}}/>
+                <View style={{backgroundColor:'white',flex: 10.0 - (rateSet.rateDispPercent * 10.0)}}/>
+              </View>
+            </View>
+          )
+        })}
+      </View>
+    )
+  }
+
   render() {
     const { params } = this.props.navigation.state;
     return (
-      <View style={{flex:1, }}>
+      <RefreshableScrollView
+      style={{flex:1, backgroundColor:'white' }}>
         <View style={styles.cardItem}>
           <Text style={styles.cardText}>
             {'Balance : ' + this.state.balance + '\n' + params.address}
           </Text>
         </View>
         <View style={styles.cardItem}>
-          <Text style={styles.cardText}>
-            {this.getHashratesString(params)}
-          </Text>
+          {this.getHashratesJSX(params)}
         </View>
-        <View style={styles.cardItem}>
-          <Text style={styles.cardText}>
-            {this.getHashratesString(params)}
-          </Text>
-        </View>
-      </View>
+      </RefreshableScrollView>
+    );
+  }
+}
+
+class RefreshableScrollView extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      refreshing: false,
+    };
+  }
+
+  fetchData(){
+    console.log('refreshing');
+  }
+
+  @autobind
+  _onRefresh() {
+    this.setState({refreshing: true});
+    this.setState({refreshing: false});
+  }
+
+  render() {
+    return (
+      <ScrollView
+        refreshControl={
+          <RefreshControl
+            refreshing={this.state.refreshing}
+            onRefresh={this._onRefresh.bind(this)}
+          />
+        }
+      >
+      {this.props.children}
+      </ScrollView>
     );
   }
 }
