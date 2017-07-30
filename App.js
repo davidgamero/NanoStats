@@ -669,7 +669,7 @@ class AddressStatsScreen extends React.Component {
         <View style={styles.cardItem}>
           <Text style={styles.cardItemHeading}>Info</Text> 
           <Text style={styles.cardText}>
-            {'Balance : ' + this.state.balance + '\n' + params.address}
+            {'Payout Balance : ' + this.state.balance + '\n' + params.address}
           </Text>
         </View>
         <View style={styles.cardItem}>
