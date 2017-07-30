@@ -1,9 +1,11 @@
 import React from 'react';
-import { StyleSheet, Text, View, TextInput, Button, TouchableOpacity, AsyncStorage, FlatList, Picker, Keyboard, Alert, Platform, RefreshControl, ScrollView } from 'react-native';
+import { StyleSheet, Text, View, TextInput, Button, TouchableOpacity, AsyncStorage, FlatList, Picker, Keyboard, Alert, Platform, RefreshControl, ScrollView, Linking } from 'react-native';
 import autobind from 'autobind-decorator'
 import { StackNavigator } from 'react-navigation';
 
 //style sheet resource info
+themeColor = '#2196F3';
+
 const styles = StyleSheet.create({
   cardTextInput: {
     height: (Platform.OS == 'android' ? 40 : 20),
@@ -11,7 +13,7 @@ const styles = StyleSheet.create({
   headerTouchableText: {
     marginLeft: 20,
     marginRight: 20,
-    color: '#2196F3',
+    color: themeColor,
   },
   cardText: {
     margin: 5,
@@ -25,17 +27,33 @@ const styles = StyleSheet.create({
     backgroundColor: 'white',
     borderRadius: 5,
   },
+  cardItemHeading: {
+    textAlign: 'center',
+    padding: 2,
+    color: themeColor,
+    fontSize: 20,
+
+  },
   homeNewAddressButton: {
     
   },
+  homeAddressItemHeading: {
+    textAlign: 'center',
+    padding: 2,
+    color: themeColor,
+    fontSize: 20,
+  },
   homeAddressItemText: {
-
+    textAlign: 'center',
+    padding: 2,
+    color: 'black',
+    fontSize: 15,
   },
   button: {
     marginTop: 20,
     margin: 10,
     alignItems: 'center',
-    backgroundColor: '#2196F3',
+    backgroundColor: themeColor,
     borderRadius: 5
   },
   buttonText: {
@@ -44,7 +62,7 @@ const styles = StyleSheet.create({
     fontSize: 20
   },
   avgHashBar: {
-    backgroundColor:'#2196F3',
+    backgroundColor: themeColor,
     borderRadius: 5,
   },
   nowHashBar: {
@@ -54,7 +72,26 @@ const styles = StyleSheet.create({
   hashBarBG: {
     backgroundColor:'white'
   },
-
+  hourPickerButton: {
+    borderRadius: 5,
+    margin: 5,
+    backgroundColor: 'white',
+    borderColor: themeColor,
+    borderWidth: 2,
+    alignItems: 'center',
+  },
+  hourPickerButtonText:{
+    alignSelf: 'center',
+    color: themeColor,
+    fontSize: 15,
+    textAlign: 'center',
+    margin: 8,
+  },
+  githubLink: {
+    textAlign: 'center',
+    color: themeColor,
+    textDecorationLine: 'underline',
+  },
 //older
   myListItem: {
     height: 50,
@@ -91,6 +128,11 @@ const HashrateUnits = {
   SIA: 'Mh/s,'
 }
 
+const HashrateShareFactors = {
+  ETH: 8.5,
+  SIA: 86,
+}
+
 class HomeScreen extends React.Component {
 
   constructor(props){
@@ -108,11 +150,21 @@ class HomeScreen extends React.Component {
         try{
           if(this.state.pairs[i].cryptocurrency == 'ETH'){
             fetch('https://etherchain.org/api/account/' + this.state.pairs[i].address)
-              .then((response) => response.json())
+              .then((response) => {
+                try{
+                  return response.json();
+                }catch(e){
+                  console.log(e);
+                }
+              })
               .then((responseJson) => {
                 p = this.state.pairs;
-
-                this.addBalanceData(responseJson.data);
+                try{
+                  this.addBalanceData(responseJson.data);
+                }catch(e){
+                  console.log(e);
+                }
+                
               })
               .catch((error) => {
                 console.error(error);
@@ -128,6 +180,7 @@ class HomeScreen extends React.Component {
 
   @autobind
   addBalanceData(data){
+    console.log(data);
     balance = data[0] ? data[0].balance : null;
     address = data[0] ? data[0].address : null;
 
@@ -225,14 +278,14 @@ class HomeScreen extends React.Component {
     const { navigate } = this.props.navigation;
     return (
       <View style={{flex:1, justifyContent: 'center'}}>
-        <View style={{flex:1, justifyContent: 'center'}}>
+        <View style={{flex:2, justifyContent: 'center'}}>
           <TouchableOpacity onPress={() => navigate('NewAddress')} style={styles.homeNewAddressButton}>
             <View style={styles.button}>
                 <Text style={styles.buttonText}>New Address</Text>
             </View>
           </TouchableOpacity>
         </View>
-        <View style={{flex: 10,}}>
+        <View style={{flex: 20,}}>
           <AddressList style={{flex: 9,}}
             data={this.state.pairs}
             extraData={this.state}
@@ -240,6 +293,9 @@ class HomeScreen extends React.Component {
             onLongPressItem={this.promptDeletePair}
             onRefresh={this.fetchData}
           />
+        </View>
+        <View style={{flex:1}}>
+          <Text onPress={() => Linking.openURL('http://www.github.com/david340804/nanostats')} style={styles.githubLink}>{'Peep the Github'}</Text>
         </View>
       </View>
     );
@@ -378,8 +434,8 @@ class AddressListItem extends React.PureComponent {
       onPress={this._onPress}
       onLongPress={this._onLongPress}>
         <View style={styles.cardItem}>
-          <Text style={styles.homeAddressItemText}>{this.props.item.name + ' : ' + this.props.item.cryptocurrency}</Text>
-          <Text style={styles.homeAddressItemText}>{this.props.balance ? 'Balance: ' + wei2Rounded(this.props.balance,4) : 'No balance found'}</Text>
+          <Text style={styles.homeAddressItemHeading}>{this.props.item.name + ' : ' + this.props.item.cryptocurrency}</Text>
+          {this.props.item.cryptocurrency == 'ETH' ? <Text style={styles.homeAddressItemText}>{this.props.balance ? 'Balance: ' + wei2Rounded(this.props.balance,4) : 'No balance found'}</Text> : null}
           <Text style={styles.homeAddressItemText}>{this.props.item.address}</Text>
         </View>
       </TouchableOpacity>
@@ -458,6 +514,7 @@ class AddressStatsScreen extends React.Component {
       address: '',
       chartData: [],
       miningChartHours: 6,
+      miningChartBars: 12,
     };
   }
 
@@ -505,7 +562,6 @@ class AddressStatsScreen extends React.Component {
             // do something with new state
             this.parseAvgHashrates();
           });
-          //console.log(responseJson.data);
         }
       })
       .catch((error) => {
@@ -523,7 +579,6 @@ class AddressStatsScreen extends React.Component {
           }, function() {
             //do something wit fetched data
           });
-          //console.log(responseJson.data);
         }
       })
       .catch((error) => {
@@ -531,6 +586,29 @@ class AddressStatsScreen extends React.Component {
     });
 
 
+  }
+
+  @autobind
+  setMiningChartHours(hours){
+    var bars;
+    switch(hours){
+      case 1:
+        bars = 6;
+        break;
+      case 6:
+        bars = 12;
+        break;
+      case 12:
+        bars = 24;
+        break;
+      default:
+        bars = 12;
+    }
+
+    this.setState({
+      miningChartHours: hours,
+      miningChartBars: bars,
+    })
   }
 
   @autobind
@@ -589,18 +667,26 @@ class AddressStatsScreen extends React.Component {
       <RefreshableScrollView
       style={{flex:1, backgroundColor:'white' }}>
         <View style={styles.cardItem}>
+          <Text style={styles.cardItemHeading}>Info</Text> 
           <Text style={styles.cardText}>
             {'Balance : ' + this.state.balance + '\n' + params.address}
           </Text>
         </View>
         <View style={styles.cardItem}>
+          <Text style={styles.cardItemHeading}>Hashrate</Text>
           <MiningChart
             data={this.state.chartData}
-            hours={'24'}
+            cryptocurrency={params.cryptocurrency}
+            hours={this.state.miningChartHours}
+            bars={this.state.miningChartBars}
             height={100}
+          />
+          <MiningChartHourPicker
+            setHours={this.setMiningChartHours}
           />
         </View>
         <View style={styles.cardItem}>
+          <Text style={[styles.cardItemHeading, {margin: 5}]}>Averages</Text>
           <View style={{flex: 1, flexDirection: 'row'}}>
             <View style={{flex: 1, marginRight: 5}}>
               <Text style={{textAlign: 'right',}}>{'Now'}</Text>
@@ -620,11 +706,14 @@ class AddressStatsScreen extends React.Component {
             hashrates={this.state.parsedHashrates}/>
         </View>
         <View style={styles.cardItem}>
+          <Text style={[styles.cardItemHeading, {margin: 5}]}>Workers</Text>
           <WorkerTable
             data={this.state.workers}
             hashrateUnit={HashrateUnits[this.state.cryptocurrency]}
+            themeColor={themeColor}
           />
         </View>
+        <View style={{height: 10}}/>
       </RefreshableScrollView>
     );
   }
@@ -693,7 +782,7 @@ class AvgHashratesBarChart extends React.Component {
               </View>
             </View>
           )})
-        : null
+        : <Text>{'Fetching...'}</Text>
         }
       </View>
     )
@@ -708,9 +797,9 @@ class WorkerTable extends React.Component {
   render() {
     return (
       <View>
-        <View style={{flexDirection: 'row', margin: 5}}>
+        <View style={{flexDirection: 'row', margin: 5, borderBottomWidth: 1, borderBottomColor: this.props.themeColor ? this.props.themeColor : 'black'}}>
               <View style={{flex: 1, marginRight: 5}}>
-                <Text style={{textAlign: 'right',}}>{'Worker'}</Text>
+                <Text style={{textAlign: 'right',}}>{'Name'}</Text>
               </View>
               <View style={{flex: 1, marginRight: 5}}>
                 <Text style={{textAlign: 'right',}}>{'Current'}</Text>
@@ -718,10 +807,10 @@ class WorkerTable extends React.Component {
               <View style={{flex: 1}}>
                 <Text style={{textAlign: 'right',}}>{'6h'}</Text>
               </View>
-              <View style={{flex: 1,margin: 2}}> 
+              <View style={{flex: 1,margin: 1}}> 
                 <Text style={{textAlign: 'right',}}>{'12h'}</Text>
               </View>
-              <View style={{flex: 2}}>
+              <View style={{flex: 1}}>
               </View>
           </View>
         {this.props.data ? this.props.data.map(function(worker,index){
@@ -739,7 +828,7 @@ class WorkerTable extends React.Component {
               <View style={{flex: 1,margin: 2}}> 
                 <Text style={{textAlign: 'right',}}>{worker.avg_h12}</Text>
               </View>
-              <View style={{flex: 2}}>
+              <View style={{flex: 1}}>
               </View>
             </View>
           )})
@@ -776,9 +865,7 @@ class MiningChart extends React.Component {
     numBars = this.props.bars ? this.props.bars : this.props.hours;
 
     //in Mh/s
-    //console.log(data);
-    //hashrateData = data.map(function(a) {return Math.round(a.hashrate / 1000)});
-    hashrateData = data.map(function(a) {return Math.round(a.hashrate / 1000)});
+    hashrateData = data.map(function(a) {return Math.round(a.shares)});
     sharesData = data.map(function(a) {return Math.round(a.shares)});
 
     max = getMaxOfArray(hashrateData);
@@ -797,46 +884,96 @@ class MiningChart extends React.Component {
     for(i = 0; i < numBars; i++){
       thisBarData = hashrateData.slice(parseInt(i*incrementLength), (i + 1)*incrementLength);
       barData.push(thisBarData);
-//      console.log(thisBarData);
     }
 
+    //round max to an even increment of ten
+    maxRounded = Math.ceil(max / 10) * 10;
+    console.log(maxRounded);
 
-    //console.log(barData);
+    barPercents = arrToPercentOfVal(getMeanOfArrayRows(barData),maxRounded);
 
-    //console.log(arrToPercentOfMax(getMeanOfArrayRows(barData)));
-
-
-    barPercents = arrToPercentOfMax(getMeanOfArrayRows(barData));
-
-    return(<View style={{flex: 1}}>
-      <Text>{'Hashrate'}</Text>
-      <View style={{flexDirection: 'row', margin: 5, display: 'flex', height: this.props.height ? this.props.height : 100}}>
-        {barPercents ? barPercents.map(function(percent,index){
-          return (
-            <View 
-            style={{flex: 1, margin: 2.5}}
-            key={index}>
-              <VertPercentBar style={{flex:1,}}
-                percent={percent}
-                barStyle={styles.avgHashBar}
-                barBackgroundStyle={styles.hashBarBG}
-              />
-            </View>
-          )})
-        : null
-        }
-      </View>
-      <Text>{'Shares'}</Text>
-      <BarChart
+    return(
+      <View style={{flex: 1}}>
+        {this.props.data ? 
+        <BarChart
           data={sharesData}
-          bars={12}
-          height={100}
+          cryptocurrency={this.props.cryptocurrency}
+          bars={numBars}
+          height={this.props.height}
           barStyle={styles.avgHashBar}
           barBackgroundStyle={styles.hashBarBG}
           />
+          : <Text>{'Fetching...'}</Text>
+        }
       </View>
     )
 
+  }
+}
+
+class MiningChartHourPicker extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      hours: 6,
+    }
+    this._setHours = this._setHours.bind(this)
+  }
+
+  //pass up the change in hours
+  _setHours(hours) {
+    if(this.props.setHours){
+      this.props.setHours(hours);
+    }else{
+      console.log('Failed to set mining chart hours in HourPicker');
+    }
+  }
+
+  render() {
+    //possible time ranges in hours
+    ranges = [1,6,12]
+
+    return (
+      <View style={{flexDirection: 'row',height: 50}}>
+        {ranges.map((range,index) => {
+          return(
+            <MiningChartHourPickerButton
+              hours={range}
+              setHours={this._setHours}
+              key={range}
+            />
+          )
+        })}
+      </View>
+    )
+  }
+}
+
+class MiningChartHourPickerButton extends React.Component {
+  constructor(props) {
+    super(props);
+    this._onPress = this._onPress.bind(this);
+  }
+
+  _onPress(){
+    console.log(this.props);
+    if(this.props){
+      this.props.setHours(this.props.hours);
+    }else{
+      console.log('Failed to set mining chart hours in PickerButton');
+    }
+  }
+
+  render() {
+    return(
+      <TouchableOpacity
+      style = {{flex: 1}}
+      onPress={this._onPress}>
+        <View style={[styles.hourPickerButton,{flex: 1,height: 50}]}>
+          <Text style={styles.hourPickerButtonText}>{this.props.hours + 'h'}</Text>
+        </View>
+    </TouchableOpacity>
+    )
   }
 }
 
@@ -866,17 +1003,29 @@ class BarChart extends React.Component {
     for(i = 0; i < numBars; i++){
       thisBarData = data.slice(parseInt(i*incrementLength), (i + 1)*incrementLength);
       barData.push(thisBarData);
-//      console.log(thisBarData);
     }
 
     barPercents = arrToPercentOfMax(getMeanOfArrayRows(barData));
 
-    console.log(barPercents);
+    yLabelStyle = {
+      flex: 1,
+      borderTopWidth: 1,
+    }
+    scaleFactor = this.props.cryptocurrency ? HashrateShareFactors[this.props.cryptocurrency] : 1;
+    labels = [Math.round(max * scaleFactor),Math.round(max*0.5*scaleFactor)];
 
     return (
       <View style={{flexDirection: 'row', margin: 5, display: 'flex', height: this.props.height ? this.props.height : 100}}>
+        <View style={{ flexDirection: 'column'}}>
+          {labels.map((label,index) => {
+            return (
+              <View style={yLabelStyle} key={index}>
+                <Text>{label}</Text>
+              </View>
+            )
+          })}
+        </View>
         {barPercents ? barPercents.map(function(percent,index){
-          console.log(percent);
           return (
             <View 
             style={{flex: 1, margin: 2.5}}
@@ -890,6 +1039,15 @@ class BarChart extends React.Component {
           )})
         : null
         }
+        <View style={{ flexDirection: 'column'}}>
+          {labels.map((label,index) => {
+            return (
+              <View style={yLabelStyle} key={index}>
+                <Text style={{textAlign: 'right'}}>{label}</Text>
+              </View>
+            )
+          })}
+        </View>
       </View>
     )
   }
@@ -947,6 +1105,15 @@ function arrToPercentOfMax(arr) {
   try {
     max = getMaxOfArray(arr);
     return arr.map((a) => {return (a*1.0) / (max*1.0)})
+  } catch(e){
+    console.log(e);
+  }
+  return null;
+}
+
+function arrToPercentOfVal(arr,val) {
+  try {
+    return arr.map((a) => {return (a*1.0) / (val*1.0)})
   } catch(e){
     console.log(e);
   }
