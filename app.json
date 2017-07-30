@@ -1,0 +1,30 @@
+{
+  "expo": {
+    "name": "nanostats",
+    "description": "An empty new project",
+    "slug": "nanostats",
+    "privacy": "public",
+    "sdkVersion": "19.0.0",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "primaryColor": "#cccccc",
+    "icon": "./assets/icons/app-icon.png",
+    "loading": {
+      "icon": "./assets/icons/loading-icon.png",
+      "hideExponentText": false
+    },
+    "packagerOpts": {
+      "assetExts": ["ttf", "mp4"]
+    },
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+    	"package": "com.davidgamero.nanostats"
+    },
+    "androidStatusBar": {
+    	barStyle: "light-content",
+    	backgroundColor: "#2196F3",
+    }
+  }
+}
