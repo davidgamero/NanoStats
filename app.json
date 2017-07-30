@@ -24,7 +24,7 @@
     },
     "androidStatusBar": {
     	barStyle: "light-content",
-    	backgroundColor: "#2196F3",
+    	backgroundColor: "#FFFFFF",
     }
   }
 }

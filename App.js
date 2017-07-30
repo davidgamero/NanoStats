@@ -403,7 +403,7 @@ class NewAddressScreen extends React.Component {
           </Picker>
           <TextInput  
               style={styles.cardText, styles.cardTextInput}
-              placeholder={'Address'}
+              placeholder={'Address or Nanopool URL'}
               onChangeText={(address) => this.setState({'newAddress': address})}
             />
         </View>
@@ -804,13 +804,14 @@ class WorkerTable extends React.Component {
               <View style={{flex: 1, marginRight: 5}}>
                 <Text style={{textAlign: 'right',}}>{'Current'}</Text>
               </View>
+              <View style={{flex: 1,margin: 1}}> 
+                <Text style={{textAlign: 'right',}}>{'3h'}</Text>
+              </View>
               <View style={{flex: 1}}>
                 <Text style={{textAlign: 'right',}}>{'6h'}</Text>
               </View>
               <View style={{flex: 1,margin: 1}}> 
                 <Text style={{textAlign: 'right',}}>{'12h'}</Text>
-              </View>
-              <View style={{flex: 1}}>
               </View>
           </View>
         {this.props.data ? this.props.data.map(function(worker,index){
@@ -822,13 +823,14 @@ class WorkerTable extends React.Component {
               <View style={{flex: 1, marginRight: 5}}>
                 <Text style={{textAlign: 'right',}}>{worker.hashrate}</Text>
               </View>
+              <View style={{flex: 1,margin: 2}}> 
+                <Text style={{textAlign: 'right',}}>{worker.avg_h3}</Text>
+              </View>
               <View style={{flex: 1}}>
                 <Text style={{textAlign: 'right',}}>{worker.avg_h6}</Text>
               </View>
               <View style={{flex: 1,margin: 2}}> 
                 <Text style={{textAlign: 'right',}}>{worker.avg_h12}</Text>
-              </View>
-              <View style={{flex: 1}}>
               </View>
             </View>
           )})
