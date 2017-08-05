@@ -573,9 +573,56 @@ class AddressStatsScreen extends React.Component {
       .then((response) => response.json())
       .then((responseJson) => {
         if(responseJson.data){
+        	var d = responseJson.data;
+
+        	i = 0;	//index we are checking
+        	cDate = parseInt(d[0].date);	//timestamp of first data point
+        	now = parseInt(Math.round(new Date() / 1000)); //current timestamp
+
+        	while ( parseInt(d[i].date) < (now - (11*60))){
+        		//while the current data point is not within the last 11 min
+
+        		fDelta = 0;
+        		nextIsBlank =  (d[i+1] == undefined); // if next entry doesn't exist or is falsey
+        		if(!nextIsBlank){
+        			fDelta = (parseInt(d[i+1].date)-parseInt(d[i].date)); //forwardDelta of date (seconds)
+        		}
+
+        		reportingCycles = 10; //first x cycles are logged to console in detail
+
+        		if(i < reportingCycles){
+        			console.log(d[i]);
+	        		try{
+	        			console.log(d[i+1]);
+	        		}catch(e){
+	        			console.log(e);
+	        		}
+							console.log("FDelta > 600: " + (fDelta > 600));
+							console.log("NextIsBlank: " + (nextIsBlank));
+						}
+
+        		if(nextIsBlank || (fDelta > 600) ){
+	       			//if the next point doesn't exist or isn't the next sequential
+	       			if(i < reportingCycles)  {
+        			 console.log("Inserting: " + (parseInt(d[i].date) + (10*60)));
+	       			}
+ 
+        			d.splice(i+1,0,
+        				{
+        					date: parseInt(d[i].date) + (10*60),
+        					shares: 0,
+        				}
+        			);
+
+        		}
+
+        		i = i + 1;
+        	}
+
+
           this.setState({
             //update the state
-            chartData: responseJson.data,
+            chartData: d,
           }, function() {
             //do something wit fetched data
           });
@@ -739,14 +786,16 @@ class HorizPercentBar extends React.Component {
 class VertPercentBar extends React.Component {
     constructor(props) {
     super(props);
-    this.state = {percent: 0};
+    this.state = {percent: 0.05};
   }
 
   render() {
+  	var p = this.props.percent;
+
     return(
         <View style={{flex: 1,}}>
-          <View style={[{flex: 10.0 - (this.props.percent * 10.0)}, this.props.barBackgroundStyle]}/>
-          <View style={[{flex: this.props.percent * 10.0}, this.props.barStyle]}/>
+          <View style={[{flex: 10.0 - (p * 10.0)}, this.props.barBackgroundStyle]}/>
+          <View style={[{flex: p * 10.0}, this.props.barStyle]}/>
         </View>
     )
     return null
@@ -862,6 +911,7 @@ class MiningChart extends React.Component {
       //default to all data if no time range supplied
       data = this.props.data
     }
+    //console.log(data);
 
     //how many bars to display
     numBars = this.props.bars ? this.props.bars : this.props.hours;
@@ -890,7 +940,6 @@ class MiningChart extends React.Component {
 
     //round max to an even increment of ten
     maxRounded = Math.ceil(max / 10) * 10;
-    console.log(maxRounded);
 
     barPercents = arrToPercentOfVal(getMeanOfArrayRows(barData),maxRounded);
 
@@ -1008,6 +1057,7 @@ class BarChart extends React.Component {
     }
 
     barPercents = arrToPercentOfMax(getMeanOfArrayRows(barData));
+    console.log(barPercents);
 
     yLabelStyle = {
       flex: 1,
@@ -1033,7 +1083,9 @@ class BarChart extends React.Component {
             style={{flex: 1, margin: 2.5}}
             key={index}>
               <VertPercentBar style={{flex:1,}}
-                percent={percent}
+                percent={
+                	Math.max(0.05,percent) //display a 5% if there is nothing there for aestheics
+                }
                 barStyle={styles.avgHashBar}
                 barBackgroundStyle={styles.hashBarBG}
                />
@@ -1106,7 +1158,7 @@ function getMinOfArray(numArray) {
 function arrToPercentOfMax(arr) {
   try {
     max = getMaxOfArray(arr);
-    return arr.map((a) => {return (a*1.0) / (max*1.0)})
+    return arr.map((a) => {return a == 0 ? 0 : (a*1.0) / (max*1.0)})
   } catch(e){
     console.log(e);
   }
