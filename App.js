@@ -579,8 +579,8 @@ class AddressStatsScreen extends React.Component {
         	cDate = parseInt(d[0].date);	//timestamp of first data point
         	now = parseInt(Math.round(new Date() / 1000)); //current timestamp
 
-        	while ( parseInt(d[i].date) < (now - (11*60))){
-        		//while the current data point is not within the last 11 min
+        	while ( parseInt(d[i].date) < (now - (15*60))){
+        		//while the current data point is not within the last 15 min
 
         		fDelta = 0;
         		nextIsBlank =  (d[i+1] == undefined); // if next entry doesn't exist or is falsey
