@@ -1,6 +1,8 @@
 # NanoStats
 A React-Native monitor for NanoPool Mining Stats
 
+[Play Store Link](https://play.google.com/store/apps/details?id=com.davidgamero.nanostats&hl=en)
+
 Currently supports Ethereum and Siacoin, plans to include all Nanopool supported Cryptos in the future
 
 Drop me an email for feature requests or bug reports (or open a github issue), I'd appreciate it :)
