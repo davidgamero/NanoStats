@@ -69,6 +69,10 @@ const styles = StyleSheet.create({
     backgroundColor:'#7bdb78',
     borderRadius: 5,
   },
+  repHashBar: {
+		backgroundColor: '#888b91',
+    borderRadius: 5,
+  },
   hashBarBG: {
     backgroundColor:'white'
   },
@@ -720,7 +724,6 @@ class AddressStatsScreen extends React.Component {
           </Text>
         </View>
         <View style={styles.cardItem}>
-          <Text style={styles.cardItemHeading}>Hashrate</Text>
           <MiningChart
             data={this.state.chartData}
             cryptocurrency={params.cryptocurrency}
@@ -917,44 +920,62 @@ class MiningChart extends React.Component {
     numBars = this.props.bars ? this.props.bars : this.props.hours;
 
     //in Mh/s
-    hashrateData = data.map(function(a) {return Math.round(a.shares)});
+    reportedHashrateData = data.map(function(a) {return Math.round(a.hashrate / 1000)});
     sharesData = data.map(function(a) {return Math.round(a.shares)});
 
-    max = getMaxOfArray(hashrateData);
-    min = getMinOfArray(hashrateData);
+    // max = getMaxOfArray(hashrateData);
+    // min = getMinOfArray(hashrateData);
 
-    //scale using max-min= 50%
-    mid = 0.5*(max+min);
-    fiftyRange = max-min;
-    breakPoint = mid - (fiftyRange);
+    // //scale using max-min= 50%
+    // mid = 0.5*(max+min);
+    // fiftyRange = max-min;
+    // breakPoint = mid - (fiftyRange);
 
     //array to hold the bars' data
-    barData = [];
-    //how many data points each bar averages
-    incrementLength = hashrateData.length / numBars;
+    // barData = [];
+    // //how many data points each bar averages
+    // incrementLength = hashrateData.length / numBars;
 
-    for(i = 0; i < numBars; i++){
-      thisBarData = hashrateData.slice(parseInt(i*incrementLength), (i + 1)*incrementLength);
-      barData.push(thisBarData);
-    }
+    // for(i = 0; i < numBars; i++){
+    //   thisBarData = hashrateData.slice(parseInt(i*incrementLength), (i + 1)*incrementLength);
+    //   barData.push(thisBarData);
+    // }
 
-    //round max to an even increment of ten
-    maxRounded = Math.ceil(max / 10) * 10;
+    // //round max to an even increment of ten
+    // maxRounded = Math.ceil(max / 10) * 10;
 
-    barPercents = arrToPercentOfVal(getMeanOfArrayRows(barData),maxRounded);
+    // barPercents = arrToPercentOfVal(getMeanOfArrayRows(barData),maxRounded);
 
     return(
       <View style={{flex: 1}}>
         {this.props.data ? 
+        <View style={{flex:2}}>
+        <Text style={styles.cardItemHeading}>Calculated Hashrate</Text>
         <BarChart
           data={sharesData}
+          shareScaling={true}
           cryptocurrency={this.props.cryptocurrency}
           bars={numBars}
           height={this.props.height}
           barStyle={styles.avgHashBar}
           barBackgroundStyle={styles.hashBarBG}
           />
+         </View>
           : <Text>{'Fetching...'}</Text>
+        }
+        {(this.props.data &&  this.props.cryptocurrency == 'ETH' )? 
+        <View style={{flex:1}}>
+        <Text style={styles.cardItemHeading}>Reported Hashrate</Text>
+        <BarChart
+          data={reportedHashrateData}
+          cryptocurrency={this.props.cryptocurrency}
+          bars={numBars}
+          height={this.props.height}
+          barStyle={styles.repHashBar}
+          barBackgroundStyle={styles.hashBarBG}
+          />
+         </View>
+          : null
         }
       </View>
     )
@@ -1049,7 +1070,7 @@ class BarChart extends React.Component {
     //array to hold the bars' data
     barData = [];
     //how many data points each bar averages
-    incrementLength = hashrateData.length / numBars;
+    incrementLength = data.length / numBars;
 
     for(i = 0; i < numBars; i++){
       thisBarData = data.slice(parseInt(i*incrementLength), (i + 1)*incrementLength);
@@ -1063,7 +1084,7 @@ class BarChart extends React.Component {
       flex: 1,
       borderTopWidth: 1,
     }
-    scaleFactor = this.props.cryptocurrency ? HashrateShareFactors[this.props.cryptocurrency] : 1;
+    scaleFactor = (this.props.shareScaling && this.props.cryptocurrency) ? HashrateShareFactors[this.props.cryptocurrency] : 1;
     labels = [Math.round(max * scaleFactor),Math.round(max*0.5*scaleFactor)];
 
     return (
@@ -1077,7 +1098,7 @@ class BarChart extends React.Component {
             )
           })}
         </View>
-        {barPercents ? barPercents.map(function(percent,index){
+        {barPercents ? barPercents.map((percent,index) => {
           return (
             <View 
             style={{flex: 1, margin: 2.5}}
@@ -1086,8 +1107,8 @@ class BarChart extends React.Component {
                 percent={
                 	Math.max(0.05,percent) //display a 5% if there is nothing there for aestheics
                 }
-                barStyle={styles.avgHashBar}
-                barBackgroundStyle={styles.hashBarBG}
+                barStyle={this.props.barStyle}
+                barBackgroundStyle={this.props.barBackgroundStyle}
                />
             </View>
           )})
