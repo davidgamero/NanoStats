@@ -2,6 +2,7 @@ import React from 'react';
 import { StyleSheet, Text, View, TextInput, Button, TouchableOpacity, AsyncStorage, FlatList, Picker, Keyboard, Alert, Platform, RefreshControl, ScrollView, Linking } from 'react-native';
 import autobind from 'autobind-decorator'
 import { StackNavigator } from 'react-navigation';
+import {VertPercentBar,HorizPercentBar} from './js/percent-bar';
 
 //style sheet resource info
 themeColor = '#2196F3';
@@ -184,7 +185,6 @@ class HomeScreen extends React.Component {
 
   @autobind
   addBalanceData(data){
-    console.log(data);
     balance = data[0] ? data[0].balance : null;
     address = data[0] ? data[0].address : null;
 
@@ -594,23 +594,9 @@ class AddressStatsScreen extends React.Component {
 
         		reportingCycles = 10; //first x cycles are logged to console in detail
 
-        		if(i < reportingCycles){
-        			console.log(d[i]);
-	        		try{
-	        			console.log(d[i+1]);
-	        		}catch(e){
-	        			console.log(e);
-	        		}
-							console.log("FDelta > 600: " + (fDelta > 600));
-							console.log("NextIsBlank: " + (nextIsBlank));
-						}
-
         		if(nextIsBlank || (fDelta > 600) ){
 	       			//if the next point doesn't exist or isn't the next sequential
-	       			if(i < reportingCycles)  {
-        			 console.log("Inserting: " + (parseInt(d[i].date) + (10*60)));
-	       			}
- 
+
         			d.splice(i+1,0,
         				{
         					date: parseInt(d[i].date) + (10*60),
@@ -693,7 +679,11 @@ class AddressStatsScreen extends React.Component {
     for(var i = 0;i < times.length; i++ ){
       s.push({
         time: times[i].toString(),
-        rateText: (this.state.avghashrate ? Math.round(this.state.avghashrate['h' + times[i].toString()]) : '...') + HashrateUnits[params.cryptocurrency],
+        rateText: (
+          this.state.avghashrate ?
+            Math.round(this.state.avghashrate['h' + times[i].toString()]).toString() + ' ' + HashrateUnits[params.cryptocurrency]
+          :
+            '...'),
         rateDispPercent: (this.state.avghashrate ? (this.state.avghashrate['h' + times[i].toString()]) : 0)/(hashMax ? hashMax : 1)
       });
     };
@@ -742,7 +732,7 @@ class AddressStatsScreen extends React.Component {
               <Text style={{textAlign: 'right',}}>{'Now'}</Text>
             </View>
             <View style={{flex: 3}}>
-              <Text>{'Current Hashrate:' + (this.state.accountData && this.state.accountData.hashrate)?this.state.accountData.hashrate:'nah'}</Text>
+              <Text>{'Current Hashrate:' + (this.state.accountData && this.state.accountData.hashrate)?this.state.accountData.hashrate + ' ' + HashrateUnits[this.state.cryptocurrency]:'nah'}</Text>
             </View>
             <View style={{flex: 8, margin: 2}}>
               <HorizPercentBar  
@@ -766,42 +756,6 @@ class AddressStatsScreen extends React.Component {
         <View style={{height: 10}}/>
       </RefreshableScrollView>
     );
-  }
-}
-
-class HorizPercentBar extends React.Component {
-    constructor(props) {
-    super(props);
-    this.state = {percent: 0};
-  }
-
-  render() {
-    return(
-        <View style={{flexDirection: 'row',flex: 1}}>
-          <View style={[{flex: 10.0 - (this.props.percent * 10.0)}, this.props.barBackgroundStyle]}/>
-          <View style={[{flex: this.props.percent * 10.0}, this.props.barStyle]}/>
-        </View>
-    )
-    return null
-  }
-}
-
-class VertPercentBar extends React.Component {
-    constructor(props) {
-    super(props);
-    this.state = {percent: 0.05};
-  }
-
-  render() {
-  	var p = this.props.percent;
-
-    return(
-        <View style={{flex: 1,}}>
-          <View style={[{flex: 10.0 - (p * 10.0)}, this.props.barBackgroundStyle]}/>
-          <View style={[{flex: p * 10.0}, this.props.barStyle]}/>
-        </View>
-    )
-    return null
   }
 }
 
@@ -914,7 +868,6 @@ class MiningChart extends React.Component {
       //default to all data if no time range supplied
       data = this.props.data
     }
-    //console.log(data);
 
     //how many bars to display
     numBars = this.props.bars ? this.props.bars : this.props.hours;
@@ -922,29 +875,6 @@ class MiningChart extends React.Component {
     //in Mh/s
     reportedHashrateData = data.map(function(a) {return Math.round(a.hashrate / 1000)});
     sharesData = data.map(function(a) {return Math.round(a.shares)});
-
-    // max = getMaxOfArray(hashrateData);
-    // min = getMinOfArray(hashrateData);
-
-    // //scale using max-min= 50%
-    // mid = 0.5*(max+min);
-    // fiftyRange = max-min;
-    // breakPoint = mid - (fiftyRange);
-
-    //array to hold the bars' data
-    // barData = [];
-    // //how many data points each bar averages
-    // incrementLength = hashrateData.length / numBars;
-
-    // for(i = 0; i < numBars; i++){
-    //   thisBarData = hashrateData.slice(parseInt(i*incrementLength), (i + 1)*incrementLength);
-    //   barData.push(thisBarData);
-    // }
-
-    // //round max to an even increment of ten
-    // maxRounded = Math.ceil(max / 10) * 10;
-
-    // barPercents = arrToPercentOfVal(getMeanOfArrayRows(barData),maxRounded);
 
     return(
       <View style={{flex: 1}}>
@@ -955,6 +885,7 @@ class MiningChart extends React.Component {
           data={sharesData}
           shareScaling={true}
           cryptocurrency={this.props.cryptocurrency}
+          hours={this.props.hours}
           bars={numBars}
           height={this.props.height}
           barStyle={styles.avgHashBar}
@@ -969,6 +900,7 @@ class MiningChart extends React.Component {
         <BarChart
           data={reportedHashrateData}
           cryptocurrency={this.props.cryptocurrency}
+          hours={this.props.hours}
           bars={numBars}
           height={this.props.height}
           barStyle={styles.repHashBar}
@@ -1028,7 +960,6 @@ class MiningChartHourPickerButton extends React.Component {
   }
 
   _onPress(){
-    console.log(this.props);
     if(this.props){
       this.props.setHours(this.props.hours);
     }else{
@@ -1078,51 +1009,69 @@ class BarChart extends React.Component {
     }
 
     barPercents = arrToPercentOfMax(getMeanOfArrayRows(barData));
-    console.log(barPercents);
 
     yLabelStyle = {
       flex: 1,
       borderTopWidth: 1,
     }
+    xLabelStyle = {
+    	marginBottom: 5,
+    }
+
     scaleFactor = (this.props.shareScaling && this.props.cryptocurrency) ? HashrateShareFactors[this.props.cryptocurrency] : 1;
     labels = [Math.round(max * scaleFactor),Math.round(max*0.5*scaleFactor)];
 
     return (
-      <View style={{flexDirection: 'row', margin: 5, display: 'flex', height: this.props.height ? this.props.height : 100}}>
-        <View style={{ flexDirection: 'column'}}>
-          {labels.map((label,index) => {
-            return (
-              <View style={yLabelStyle} key={index}>
-                <Text>{label}</Text>
-              </View>
-            )
-          })}
-        </View>
-        {barPercents ? barPercents.map((percent,index) => {
-          return (
-            <View 
-            style={{flex: 1, margin: 2.5}}
-            key={index}>
-              <VertPercentBar style={{flex:1,}}
-                percent={
-                	Math.max(0.05,percent) //display a 5% if there is nothing there for aestheics
-                }
-                barStyle={this.props.barStyle}
-                barBackgroundStyle={this.props.barBackgroundStyle}
-               />
-            </View>
-          )})
-        : null
-        }
-        <View style={{ flexDirection: 'column'}}>
-          {labels.map((label,index) => {
-            return (
-              <View style={yLabelStyle} key={index}>
-                <Text style={{textAlign: 'right'}}>{label}</Text>
-              </View>
-            )
-          })}
-        </View>
+    	<View style={{}}>
+	      <View style={{flex: 5, flexDirection: 'row', margin: 5, display: 'flex', height: this.props.height ? this.props.height : 100}}>
+	        <View style={{ flexDirection: 'column'}}>
+	          {labels.map((label,index) => {
+	            return (
+	              <View style={yLabelStyle} key={index}>
+	                <Text>{label}</Text>
+	              </View>
+	            )
+	          })}
+	        </View>
+	        {barPercents ? barPercents.map((percent,index) => {
+	          return (
+	            <View 
+	            style={{flex: 1, margin: 2.5}}
+	            key={index}>
+	              <VertPercentBar style={{flex:1,}}
+	                percent={
+	                	Math.max(0.05,percent) //display a 5% if there is nothing there for aestheics
+	                }
+	                barStyle={this.props.barStyle}
+	                barBackgroundStyle={this.props.barBackgroundStyle}
+	               />
+	            </View>
+	          )})
+	        : null
+	        }
+	        <View style={{ flexDirection: 'column'}}>
+	          {labels.map((label,index) => {
+	            return (
+	              <View style={yLabelStyle} key={index}>
+	                <Text style={{textAlign: 'right'}}>{label}</Text>
+	              </View>
+	            )
+	          })}
+	        </View>
+	      </View>
+	      <View style={{flexDirection: 'row'}}>
+	      	<View style={[{flex: 1},xLabelStyle]}/>
+	      	<View style={[{flex: 6},xLabelStyle]}>
+	      			<Text style={{textAlign: 'left'}}>{this.props.hours ? '-' + this.props.hours.toString() + 'h' : '...'}</Text>
+	      	</View>
+	      	<View style={[{flex: 6},xLabelStyle]}>
+	      			<Text style={{textAlign: 'center'}}>{this.props.hours ? '-' + (this.props.hours*0.5).toString() + 'h' : '...'}</Text>
+	      	</View>
+	      	<View style={[{flex: 6},xLabelStyle]}>
+	      			<Text style={{textAlign: 'right'}}>Now</Text>
+	      	</View>
+	      	<View style={[{flex: 1},xLabelStyle]}/>
+	      </View>
       </View>
     )
   }
