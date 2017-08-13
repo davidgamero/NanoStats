@@ -636,6 +636,9 @@ class AddressStatsScreen extends React.Component {
         bars = 12;
         break;
       case 12:
+        bars = 18;
+        break;
+      case 24:
         bars = 24;
         break;
       default:
@@ -935,7 +938,7 @@ class MiningChartHourPicker extends React.Component {
 
   render() {
     //possible time ranges in hours
-    ranges = [1,6,12]
+    ranges = [1,6,12,24]
 
     return (
       <View style={{flexDirection: 'row',height: 50}}>
