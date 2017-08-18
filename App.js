@@ -601,6 +601,7 @@ class AddressStatsScreen extends React.Component {
         				{
         					date: parseInt(d[i].date) + (10*60),
         					shares: 0,
+                  hashrate: 0,
         				}
         			);
 
