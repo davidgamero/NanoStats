@@ -1,7 +1,26 @@
 # NanoStats
-A React-Native monitor for NanoPool Mining Stats
+A React-Native monitor for NanoPool Mining Stats focused on streamlined UI
 
-[Play Store Link](https://play.google.com/store/apps/details?id=com.davidgamero.nanostats&hl=en)
+## Features ##
+
+* Account payout balance
+* Live historic mining rate calculated from shares submitted (also miner reported hashrates for supported currencies)
+* Current address balances (ETH only)
+* Running hashrate averages from current instantaneous rate to 24h
+* Worker hashrate and running hashrate averages (3h,6h,12h)
+
+## Download ##
+
+[Play Store](https://play.google.com/store/apps/details?id=com.davidgamero.nanostats&hl=en)
+
+IOS coming...
+
+## Screenshots ##
+Mining Stats               | Worker Info
+:-------------------------:|:-------------------------:
+![Screenshot1](https://i.imgur.com/fmvFNvt.png)  |  ![Screenshot2](https://i.imgur.com/NlGyNGX.png)
+
+## More ##
 
 Currently supports Ethereum and Siacoin, plans to include all Nanopool supported Cryptos in the future
 
