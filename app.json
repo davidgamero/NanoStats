@@ -17,7 +17,9 @@
       "assetExts": ["ttf", "mp4"]
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier":"com.davidgamero.nanostats",
+      "buildNumber":"2"
     },
     "android": {
     	"package": "com.davidgamero.nanostats"

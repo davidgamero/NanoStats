@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, Text, View, TextInput, Button, TouchableOpacity, AsyncStorage, FlatList, Picker, Keyboard, Alert, Platform, RefreshControl, ScrollView, Linking } from 'react-native';
+import { StyleSheet, Text, View, TextInput, Button, TouchableOpacity, AsyncStorage, FlatList, Picker, Keyboard, Alert, Platform, RefreshControl, ScrollView, Linking, StatusBar } from 'react-native';
 import autobind from 'autobind-decorator'
 import { StackNavigator } from 'react-navigation';
 import {VertPercentBar,HorizPercentBar} from './js/percent-bar';
@@ -282,6 +282,10 @@ class HomeScreen extends React.Component {
     const { navigate } = this.props.navigation;
     return (
       <View style={{flex:1, justifyContent: 'center'}}>
+        <StatusBar
+           barStyle={(Platform.OS === 'ios')?'dark-content':'dark-content'}
+           backgroundColor="white"
+         />
         <View style={{flex:2, justifyContent: 'center'}}>
           <TouchableOpacity onPress={() => navigate('NewAddress')} style={styles.homeNewAddressButton}>
             <View style={styles.button}>
@@ -729,13 +733,13 @@ class AddressStatsScreen extends React.Component {
         <View style={styles.cardItem}>
           <Text style={[styles.cardItemHeading, {margin: 5}]}>Averages</Text>
           <View style={{flex: 1, flexDirection: 'row'}}>
-            <View style={{flex: 1, marginRight: 5}}>
+            <View style={{flex: 3, marginRight: 5}}>
               <Text style={{textAlign: 'right',}}>{'Now'}</Text>
             </View>
-            <View style={{flex: 3}}>
+            <View style={{flex: 6}}>
               <Text>{'Current Hashrate:' + (this.state.accountData && this.state.accountData.hashrate)?this.state.accountData.hashrate + ' ' + HashrateUnits[this.state.cryptocurrency]:'nah'}</Text>
             </View>
-            <View style={{flex: 8, margin: 2}}>
+            <View style={{flex: 14, margin: 2}}>
               <HorizPercentBar  
                   percent={this.state.currentHashratePercent}
                   barStyle={styles.nowHashBar}
@@ -775,13 +779,13 @@ class AvgHashratesBarChart extends React.Component {
         {this.props.hashrates ? this.props.hashrates.map(function(rateSet,index){
           return (
             <View style={{flexDirection: 'row'}} key={index}>
-              <View style={{flex: 1, marginRight: 5}}>
+              <View style={{flex: 3, marginRight: 5}}>
                 <Text style={{textAlign: 'right',}}>{rateSet.time + 'h'}</Text>
               </View>
-              <View style={{flex: 3}}>
+              <View style={{flex: 6}}>
                 <Text style={{textAlign: 'left',}}>{rateSet.rateText}</Text>
               </View>
-              <View style={{flex: 8,margin: 2}}> 
+              <View style={{flex: 14,margin: 2}}> 
                 <HorizPercentBar  
                   percent={rateSet.rateDispPercent}
                   barStyle={styles.avgHashBar}
