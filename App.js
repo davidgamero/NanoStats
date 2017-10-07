@@ -97,34 +97,6 @@ const styles = StyleSheet.create({
     color: themeColor,
     textDecorationLine: 'underline',
   },
-//older
-  myListItem: {
-    height: 50,
-  },
-  viewTitle: {
-    color: 'white',
-    fontWeight: 'bold',
-    fontSize: 50,
-    alignSelf: 'center',
-  },
-  balanceText: {
-    color: 'white',
-    fontWeight: 'bold',
-    fontSize: 30,
-    alignSelf: 'center',
-  },
-  addressInput: {
-    height: 40,
-    color: 'black',
-    backgroundColor: 'white',
-    alignSelf: 'center',
-  },
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
 });
 
 
@@ -145,6 +117,16 @@ class HomeScreen extends React.Component {
     this.state = {
       pairs: null,
     };
+  }
+
+  static navigationOptions = ({navigation}) => ({
+    headerLeft: <Button title=" Info" onPress={()=>navigation.navigate('Info')}/>,
+  });
+
+  /** Show help information
+  */
+  showHelp(){
+    this.props.navigation.navigate('Info');
   }
 
   @autobind
@@ -202,9 +184,22 @@ class HomeScreen extends React.Component {
     });
   }
 
-
   componentDidMount(){
-    //AsyncStorage.setItem('@DatStore:addresses','[]');
+
+    //detect first launch
+    /** thanks to https://stackoverflow.com/questions/40715266/how-to-detect-first-launch-in-react-native */
+    AsyncStorage.getItem("alreadyLaunched").then(value => {
+      if(value == null){
+
+        //set launched flag
+        AsyncStorage.setItem('alreadyLaunched', '1');
+
+        //show help first time
+        this.showHelp();
+      }
+    });
+
+    //get the currency pairs
     this.loadPairs().then(() =>{
       //after pairs are loaded
       this.fetchData()
@@ -424,6 +419,23 @@ class NewAddressScreen extends React.Component {
         </View>
       </View>
     );
+  }
+}
+
+class InfoScreen extends React.Component {
+
+  goHome(){
+    this.props.navigation.navigate('Home');
+  }
+
+  render() {
+
+    return (
+      <View>
+        <Text>Thanks for trying NanoStats!</Text>
+        <Button title="Okay" onPress={()=>this.goHome()}/>
+      </View>
+    )
   }
 }
 
@@ -1183,7 +1195,7 @@ const App = StackNavigator({
     screen: HomeScreen,
     navigationOptions: ({navigate}) => ({
       title: 'NanoStats',
-      headerLeft: null,
+//      headerLeft: null,
 
     }),
   },
@@ -1193,6 +1205,12 @@ const App = StackNavigator({
   AddressStats: {
     screen: AddressStatsScreen,
   },
+  Info: {
+    screen: InfoScreen,
+    navigationOptions: ({navigate}) => ({
+      title: 'NanoStats Info',
+    }),
+  }
 });
 
 export default App;
