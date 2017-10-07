@@ -112,6 +112,13 @@ const styles = StyleSheet.create({
     padding: 10,
     fontSize: 20,
   },
+  infoLink: {
+    textAlign: 'center',
+    color: themeColor,
+    textDecorationLine: 'underline',
+    fontSize: 16,
+    padding: 10,
+  },
 });
 
 
@@ -209,6 +216,16 @@ class HomeScreen extends React.Component {
 
         //set launched flag
         AsyncStorage.setItem('alreadyLaunched', '1');
+
+        //sample address data array
+        d = [{
+          cryptocurrency: 'ETH',
+          address: '0xb576c106e18bc53a0294097b4fe9a525ec38ea5f',
+          name: 'Demo',
+        }];
+
+        //add the Demo address to the list    
+        AsyncStorage.setItem('@DatStore:addresses',JSON.stringify(d));
 
         //show help first time
         this.showHelp();
@@ -449,16 +466,19 @@ class InfoScreen extends React.Component {
     return (
       <View style={{flex:1, }}>
         <View style={styles.cardItem}>
-          <Text  style={styles.infoTextTitle}>Thanks for trying NanoStats!</Text>
-          <Text  style={styles.infoText}>Feel free to add your addresses or check out the Demo address</Text>
+          <Text  style={styles.infoTextTitle}>Thanks for downloading NanoStats!</Text>
+          <Text  style={styles.infoText}>Feel free to check out the Demo address before adding your own :)</Text>
           <Text  style={styles.infoText}>To delete an address, long press its entry on the main NanoStats screen</Text>
           <Text  style={styles.infoText}>Feedback? Suggestions?</Text>
           <Text  style={styles.infoText}>Please hit me up at</Text>
-          <Text onPress={() => Linking.openURL('mailto:david340805@gmail.com')} style={styles.githubLink}>{'david340805@gmail.com'}</Text>
+          <Text onPress={() => Linking.openURL('mailto:david340805@gmail.com')} style={styles.infoLink}>{'david340805@gmail.com'}</Text>
+          <Text  style={styles.infoText}>Or drop an issue on the</Text>
+          <Text onPress={() => Linking.openURL('http://www.github.com/david340804/nanostats')} style={styles.infoLink}>{'NanoStats Github'}</Text>
 
+          <Text  style={styles.infoText}>To see this again, press "Info" in the Top Left</Text>
           <TouchableOpacity onPress={() =>this.goHome()}>
               <View style={styles.button}>
-                  <Text style={styles.buttonText}>Alrighty</Text>
+                  <Text style={styles.buttonText}>Dismiss</Text>
               </View>
           </TouchableOpacity>
         </View>
