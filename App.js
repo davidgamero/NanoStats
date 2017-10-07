@@ -8,6 +8,9 @@ import {VertPercentBar,HorizPercentBar} from './js/percent-bar';
 themeColor = '#2196F3';
 
 const styles = StyleSheet.create({
+  centerText: {
+    textAlign: 'center',
+  },
   cardTextInput: {
     height: (Platform.OS == 'android' ? 40 : 20),
   },
@@ -34,9 +37,6 @@ const styles = StyleSheet.create({
     color: themeColor,
     fontSize: 20,
 
-  },
-  homeNewAddressButton: {
-    
   },
   homeAddressItemHeading: {
     textAlign: 'center',
@@ -97,6 +97,21 @@ const styles = StyleSheet.create({
     color: themeColor,
     textDecorationLine: 'underline',
   },
+  headingLinkText: {
+    fontSize: 18,
+    color: themeColor,
+    marginLeft: 10, 
+  },
+  infoText: {
+    textAlign: 'center',
+    padding: 10,
+    fontSize: 16,
+  },
+  infoTextTitle: {
+    textAlign: 'center',
+    padding: 10,
+    fontSize: 20,
+  },
 });
 
 
@@ -120,7 +135,7 @@ class HomeScreen extends React.Component {
   }
 
   static navigationOptions = ({navigation}) => ({
-    headerLeft: <Button title=" Info" onPress={()=>navigation.navigate('Info')}/>,
+    headerLeft: <TouchableOpacity onPress={()=>navigation.navigate('Info')}><Text style={styles.headingLinkText}>Info</Text></TouchableOpacity>,
   });
 
   /** Show help information
@@ -139,7 +154,8 @@ class HomeScreen extends React.Component {
             fetch('https://etherchain.org/api/account/' + this.state.pairs[i].address)
               .then((response) => {
                 try{
-                  return response.json();
+                  r = response.json();
+                  return r;
                 }catch(e){
                   console.log(e);
                 }
@@ -282,7 +298,7 @@ class HomeScreen extends React.Component {
            backgroundColor="white"
          />
         <View style={{flex:2, justifyContent: 'center'}}>
-          <TouchableOpacity onPress={() => navigate('NewAddress')} style={styles.homeNewAddressButton}>
+          <TouchableOpacity onPress={() => navigate('NewAddress')}>
             <View style={styles.button}>
                 <Text style={styles.buttonText}>New Address</Text>
             </View>
@@ -411,11 +427,11 @@ class NewAddressScreen extends React.Component {
             />
         </View>
         <View style={styles.homeNewAddressButton}>
-          <TouchableOpacity onPress={() => this.saveNewAddressAndHome()} style={styles.homeNewAddressButton}>
+          <TouchableOpacity onPress={() => this.saveNewAddressAndHome()}>
               <View style={styles.button}>
                   <Text style={styles.buttonText}>Add Address</Text>
               </View>
-            </TouchableOpacity>
+          </TouchableOpacity>
         </View>
       </View>
     );
@@ -431,9 +447,21 @@ class InfoScreen extends React.Component {
   render() {
 
     return (
-      <View>
-        <Text>Thanks for trying NanoStats!</Text>
-        <Button title="Okay" onPress={()=>this.goHome()}/>
+      <View style={{flex:1, }}>
+        <View style={styles.cardItem}>
+          <Text  style={styles.infoTextTitle}>Thanks for trying NanoStats!</Text>
+          <Text  style={styles.infoText}>Feel free to add your addresses or check out the Demo address</Text>
+          <Text  style={styles.infoText}>To delete an address, long press its entry on the main NanoStats screen</Text>
+          <Text  style={styles.infoText}>Feedback? Suggestions?</Text>
+          <Text  style={styles.infoText}>Please hit me up at</Text>
+          <Text onPress={() => Linking.openURL('mailto:david340805@gmail.com')} style={styles.githubLink}>{'david340805@gmail.com'}</Text>
+
+          <TouchableOpacity onPress={() =>this.goHome()}>
+              <View style={styles.button}>
+                  <Text style={styles.buttonText}>Alrighty</Text>
+              </View>
+          </TouchableOpacity>
+        </View>
       </View>
     )
   }
