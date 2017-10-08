@@ -315,6 +315,10 @@ class HomeScreen extends React.Component {
     navigate('AddressStats',pair);
   }
 
+  _onRefresh(){
+    console.log('tryna refresh');
+  }
+
   render() {
     const { navigate } = this.props.navigation;
     return (
@@ -336,7 +340,7 @@ class HomeScreen extends React.Component {
             extraData={this.state}
             onPressItem={this.navToAddressStats}
             onLongPressItem={this.promptDeletePair}
-            onRefresh={this.fetchData}
+            onRefresh={this._onRefresh}
           />
         </View>
         <View style={{flex:1}}>
@@ -649,7 +653,7 @@ class AddressStatsScreen extends React.Component {
     fetch('https://api.nanopool.org/v1/' + params.cryptocurrency.toString().toLowerCase() + '/hashratechart/' + params.address.toString())
       .then((response) => response.json())
       .then((responseJson) => {
-        if(responseJson.data){
+        if(responseJson.data && responseJson.data[0]){
         	var d = responseJson.data;
 
         	i = 0;	//index we are checking
