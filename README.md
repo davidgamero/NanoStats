@@ -13,7 +13,7 @@ A React-Native monitor for NanoPool Mining Stats focused on streamlined UI
 
 [Play Store](https://play.google.com/store/apps/details?id=com.davidgamero.nanostats&hl=en)
 
-IOS coming...
+[App Store](https://itunes.apple.com/us/app/nanostats-nanopool-monitor/id1292787957?mt=8)
 
 ## Screenshots ##
 Mining Stats               | Worker Info
