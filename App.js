@@ -237,7 +237,7 @@ class HomeScreen extends React.Component {
         });   
 
         //show help first time
-        this.showHelp();
+        //this.showHelp();
       }
     });
 
@@ -489,16 +489,20 @@ class InfoScreen extends React.Component {
           <Text onPress={() => Linking.openURL('http://www.github.com/david340804/nanostats')} style={styles.infoLink}>{'NanoStats Github'}</Text>
 
           <Text  style={styles.infoText}>To see this again, press "Info" in the Top Left</Text>
-          <TouchableOpacity onPress={() =>this.goHome()}>
-              <View style={styles.button}>
-                  <Text style={styles.buttonText}>Dismiss</Text>
-              </View>
-          </TouchableOpacity>
+          
         </View>
       </View>
     )
   }
 }
+
+/**
+<TouchableOpacity onPress={() =>this.goHome()}>
+  <View style={styles.button}>
+    <Text style={styles.buttonText}>Dismiss</Text>
+  </View>
+</TouchableOpacity>
+*/
 
 class AddressListItem extends React.PureComponent {
   _onPress = () => {
