@@ -217,15 +217,24 @@ class HomeScreen extends React.Component {
         //set launched flag
         AsyncStorage.setItem('alreadyLaunched', '1');
 
-        //sample address data array
-        d = [{
-          cryptocurrency: 'ETH',
-          address: '0xb576c106e18bc53a0294097b4fe9a525ec38ea5f',
-          name: 'Demo',
-        }];
+        //add the Demo address to the list if the address list is blank
+        AsyncStorage.getItem('@DatStore:addresses')
+        .then((add) => {
+          if(add == null || add.length < 1){
+            //sample address data array
+            d = [{
+              cryptocurrency: 'ETH',
+              address: '0xb576c106e18bc53a0294097b4fe9a525ec38ea5f',
+              name: 'Demo',
+            }];
 
-        //add the Demo address to the list    
-        AsyncStorage.setItem('@DatStore:addresses',JSON.stringify(d));
+            //if the address list is blank
+            AsyncStorage.setItem('@DatStore:addresses',JSON.stringify(d));
+
+          }    
+        }).catch(error => {
+          console.log(error);
+        });   
 
         //show help first time
         this.showHelp();
