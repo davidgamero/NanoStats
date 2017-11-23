@@ -660,6 +660,10 @@ class AddressStatsScreen extends React.Component {
         if(responseJson.data && responseJson.data[0]){
         	var d = responseJson.data;
 
+          console.log('got data len ' + d.length);
+          dateSort(d);
+          console.log('sorted length' + d.length);
+
         	i = 0;	//index we are checking
         	cDate = parseInt(d[0].date);	//timestamp of first data point
         	now = parseInt(Math.round(new Date() / 1000)); //current timestamp
@@ -1193,13 +1197,29 @@ class RefreshableScrollView extends React.Component {
   }
 }
 
+function dateSort(arr){
+  [].sort.call(arr,function(a, b){
+      // Compare the 2 dates
+      if(a.date < b.date) return -1;
+      if(a.date > b.date) return 1;
+      return 0;
+  });
+}
+
 function getMaxOfArray(numArray) {
   if (!numArray || numArray.length == 0) {
     return null;
   }
   return Math.max.apply(null, numArray);
 }
-
+function shitSort(arr){
+  [].sort.call(arr,function(a, b){
+      // Compare the 2 dates
+      if(a.date < b.date) return -1;
+      if(a.date > b.date) return 1;
+      return 0;
+  });
+}
 function getMinOfArray(numArray) {
   if (!numArray || numArray.length == 0) {
     return null;
