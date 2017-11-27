@@ -598,7 +598,7 @@ class AddressStatsScreen extends React.Component {
       cryptocurrency: '',
       address: '',
       chartData: [],
-      miningChartHours: 6,
+      miningChartHours: 12,
       miningChartBars: 12,
     };
   }
@@ -722,6 +722,9 @@ class AddressStatsScreen extends React.Component {
         bars = 12;
         break;
       case 12:
+        bars = 12;
+        break;
+      case 24:
         bars = 24;
         break;
       default:
@@ -916,13 +919,13 @@ class WorkerTable extends React.Component {
                 <Text style={{textAlign: 'right',}}>{worker.hashrate}</Text>
               </View>
               <View style={{flex: 1,margin: 2}}> 
-                <Text style={{textAlign: 'right',}}>{worker.avg_h3}</Text>
+                <Text style={{textAlign: 'right',}}>{worker.h3}</Text>
               </View>
               <View style={{flex: 1}}>
-                <Text style={{textAlign: 'right',}}>{worker.avg_h6}</Text>
+                <Text style={{textAlign: 'right',}}>{worker.h6}</Text>
               </View>
               <View style={{flex: 1,margin: 2}}> 
-                <Text style={{textAlign: 'right',}}>{worker.avg_h12}</Text>
+                <Text style={{textAlign: 'right',}}>{worker.h12}</Text>
               </View>
             </View>
           )})
@@ -1021,7 +1024,7 @@ class MiningChartHourPicker extends React.Component {
 
   render() {
     //possible time ranges in hours
-    ranges = [1,6,12]
+    ranges = [1,6,12,24]
 
     return (
       <View style={{flexDirection: 'row',height: 50}}>
