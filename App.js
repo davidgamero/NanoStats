@@ -85,9 +85,24 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     alignItems: 'center',
   },
+  hourPickerButtonSelected: {
+    borderRadius: 5,
+    margin: 5,
+    backgroundColor: themeColor,
+    borderColor: themeColor,
+    borderWidth: 2,
+    alignItems: 'center',
+  },
   hourPickerButtonText:{
     alignSelf: 'center',
     color: themeColor,
+    fontSize: 15,
+    textAlign: 'center',
+    margin: 8,
+  },
+  hourPickerButtonTextSelected:{
+    alignSelf: 'center',
+    color: 'white',
     fontSize: 15,
     textAlign: 'center',
     margin: 8,
@@ -719,7 +734,7 @@ class AddressStatsScreen extends React.Component {
         bars = 6;
         break;
       case 6:
-        bars = 12;
+        bars = 8;
         break;
       case 12:
         bars = 12;
@@ -812,6 +827,7 @@ class AddressStatsScreen extends React.Component {
           />
           <MiningChartHourPicker
             setHours={this.setMiningChartHours}
+            miningChartHours={this.state.miningChartHours}
           />
         </View>
         <View style={styles.cardItem}>
@@ -1008,7 +1024,7 @@ class MiningChartHourPicker extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      hours: 6,
+      hours: 12,
     }
     this._setHours = this._setHours.bind(this)
   }
@@ -1033,6 +1049,7 @@ class MiningChartHourPicker extends React.Component {
             <MiningChartHourPickerButton
               hours={range}
               setHours={this._setHours}
+              miningChartHours={this.props.miningChartHours}
               key={range}
             />
           )
@@ -1057,12 +1074,16 @@ class MiningChartHourPickerButton extends React.Component {
   }
 
   render() {
+    console.log(this.props.miningChartHours);
+    buttonStyle = this.props.hours == this.props.miningChartHours ? styles.hourPickerButtonSelected: styles.hourPickerButton;
+    textStyle = this.props.hours == this.props.miningChartHours ? styles.hourPickerButtonTextSelected: styles.hourPickerButtonText;
+
     return(
       <TouchableOpacity
       style = {{flex: 1}}
       onPress={this._onPress}>
-        <View style={[styles.hourPickerButton,{flex: 1,height: 50}]}>
-          <Text style={styles.hourPickerButtonText}>{this.props.hours + 'h'}</Text>
+        <View style={[buttonStyle,{flex: 1,height: 50}]}>
+          <Text style={textStyle}>{this.props.hours + 'h'}</Text>
         </View>
     </TouchableOpacity>
     )
