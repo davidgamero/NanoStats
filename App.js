@@ -173,9 +173,10 @@ class HomeScreen extends React.Component {
         //once per pair
         try{
           if(this.state.pairs[i].cryptocurrency == 'ETH'){
-            fetch('https://etherchain.org/api/account/' + this.state.pairs[i].address)
+            _add = this.state.pairs[i].address;
+            fetch('https://api.etherscan.io/api?module=account&action=balance&address=' + this.state.pairs[i].address + '&tag=latest&apikey=B1M9IPTS83TC4IAMD7F8ESWMTA8MR3VZ8M')
               .then((response) => {
-                try{
+                try{   
                   r = response.json();
                   return r;
                 }catch(e){
@@ -185,7 +186,7 @@ class HomeScreen extends React.Component {
               .then((responseJson) => {
                 p = this.state.pairs;
                 try{
-                  this.addBalanceData(responseJson.data);
+                  this.addBalanceData({address: _add, balance: responseJson.result});
                 }catch(e){
                   console.log(e);
                 }
@@ -205,8 +206,10 @@ class HomeScreen extends React.Component {
 
   @autobind
   addBalanceData(data){
-    balance = data[0] ? data[0].balance : null;
-    address = data[0] ? data[0].address : null;
+    balance = data ? data.balance : 'No balance found';
+    address = data ? data.address : null;
+
+    //console.log('adding balance for ' + address + ' as ' + balance);
 
     p = this.state.pairs;
     for(var i = 0; i<p.length; i++){
@@ -497,6 +500,7 @@ class InfoScreen extends React.Component {
           <Text  style={styles.infoTextTitle}>Thanks for downloading NanoStats!</Text>
           <Text  style={styles.infoText}>Feel free to check out the Demo address before adding your own :)</Text>
           <Text  style={styles.infoText}>To delete an address, long press its entry on the main NanoStats screen</Text>
+          <Text  style={styles.infoText}>Powered by Etherscan.io APIs</Text>
           <Text  style={styles.infoText}>Feedback? Suggestions?</Text>
           <Text  style={styles.infoText}>Please hit me up at</Text>
           <Text onPress={() => Linking.openURL('mailto:david340805@gmail.com')} style={styles.infoLink}>{'david340805@gmail.com'}</Text>
@@ -535,7 +539,7 @@ class AddressListItem extends React.PureComponent {
       onLongPress={this._onLongPress}>
         <View style={styles.cardItem}>
           <Text style={styles.homeAddressItemHeading}>{this.props.item.name + ' : ' + this.props.item.cryptocurrency}</Text>
-          {this.props.item.cryptocurrency == 'ETH' ? <Text style={styles.homeAddressItemText}>{this.props.balance ? 'Balance: ' + wei2Rounded(this.props.balance,4) : 'No balance found'}</Text> : null}
+          {this.props.item.cryptocurrency == 'ETH' ? <Text style={styles.homeAddressItemText}>{this.props.balance ? 'Wallet Balance: ' + wei2Rounded(this.props.balance,4) : '...'}</Text> : null}
           <Text style={styles.homeAddressItemText}>{this.props.item.address}</Text>
         </View>
       </TouchableOpacity>
@@ -605,7 +609,7 @@ class AddressStatsScreen extends React.Component {
   constructor(props){
     super(props);
     this.state = {
-      balance: ' ',
+      balance: '...',
       avghashrate: null,
       accountData: {},
       currentHashratePercent: 0.0,
@@ -675,15 +679,15 @@ class AddressStatsScreen extends React.Component {
         if(responseJson.data && responseJson.data[0]){
         	var d = responseJson.data;
 
-          console.log('got data len ' + d.length);
+          //console.log('got data len ' + d.length);
           dateSort(d);
-          console.log('sorted length' + d.length);
+          //console.log('sorted length' + d.length);
 
         	i = 0;	//index we are checking
         	cDate = parseInt(d[0].date);	//timestamp of first data point
         	now = parseInt(Math.round(new Date() / 1000)); //current timestamp
 
-        	while ( parseInt(d[i].date) < (now - (15*60))){
+        	while ( parseInt(d[i].date) < (now - (17*60))){
         		//while the current data point is not within the last 15 min
 
         		fDelta = 0;
@@ -1074,7 +1078,6 @@ class MiningChartHourPickerButton extends React.Component {
   }
 
   render() {
-    console.log(this.props.miningChartHours);
     buttonStyle = this.props.hours == this.props.miningChartHours ? styles.hourPickerButtonSelected: styles.hourPickerButton;
     textStyle = this.props.hours == this.props.miningChartHours ? styles.hourPickerButtonTextSelected: styles.hourPickerButtonText;
 
