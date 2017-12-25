@@ -168,61 +168,79 @@ class HomeScreen extends React.Component {
 
   @autobind
   fetchData(){
+    var eth_adds = [];
     if(this.state.pairs){
+      //get all the ETH addresses
       for(var i = 0; i<this.state.pairs.length; i++){
         //once per pair
-        try{
-          if(this.state.pairs[i].cryptocurrency == 'ETH'){
-            _add = this.state.pairs[i].address;
-            fetch('https://api.etherscan.io/api?module=account&action=balance&address=' + this.state.pairs[i].address + '&tag=latest&apikey=B1M9IPTS83TC4IAMD7F8ESWMTA8MR3VZ8M')
-              .then((response) => {
-                try{   
-                  r = response.json();
-                  return r;
-                }catch(e){
-                  console.log(e);
-                }
-              })
-              .then((responseJson) => {
-                p = this.state.pairs;
-                try{
-                  this.addBalanceData({address: _add, balance: responseJson.result});
-                }catch(e){
-                  console.log(e);
-                }
-                
-              })
-              .catch((error) => {
-                console.error(error);
-              }
-            );
+        if(this.state.pairs[i].cryptocurrency == 'ETH' && this.state.pairs[i].address){
+          eth_adds.push(this.state.pairs[i].address);
+        }
+      }
+
+      //API limit of 20 per query
+      if(eth_adds.length > 20){
+        eth_adds = eth_adds.slice(0,20);
+      }
+
+      eth_adds_string = eth_adds.join(',');
+      //console.log('adds str' + eth_adds_string);
+
+      try{
+        fetch('https://api.etherscan.io/api?module=account&action=balancemulti&address=' + eth_adds_string + '&tag=latest&apikey=B1M9IPTS83TC4IAMD7F8ESWMTA8MR3VZ8M')
+          .then((response) => {
+            try{   
+              r = response.json();
+              return r;
+            }catch(e){
+              console.log(e);
+            }
+          })
+          .then((responseJson) => {
+            p = this.state.pairs;
+            try{
+              this.addBalanceData(responseJson.result);
+            }catch(e){
+              console.log(e);
+            }
+            
+          })
+          .catch((error) => {
+            console.error(error);
           }
+          );
+          
         } catch(e){
           console.log('Error parsing JSON for balance data');
         }
-      }
     }
   }
 
   @autobind
   addBalanceData(data){
-    balance = data ? data.balance : 'No balance found';
-    address = data ? data.address : null;
+    if(data){
+      data.forEach((entry) => {
 
-    //console.log('adding balance for ' + address + ' as ' + balance);
+        balance = data ? entry.balance : 'No balance found';
+        address = data ? entry.account : null;
 
-    p = this.state.pairs;
-    for(var i = 0; i<p.length; i++){
-      //once per pair
-      if(p[i].address == address){
-        //add address to the pair object in the pairs array
-        p[i].balance = balance;
+        //console.log('adding balance for ' + address + ' as ' + balance);
 
-      }
+        p = this.state.pairs;
+        for(var i = 0; i<p.length; i++){
+          //once per pair
+          if(p[i].address === address){
+            //add address to the pair object in the pairs array
+            p[i].balance = balance;
+
+          }
+        }
+        this.setState({
+          pairs: p,
+        });
+      })
     }
-    this.setState({
-      pairs: p,
-    });
+
   }
 
   componentDidMount(){
