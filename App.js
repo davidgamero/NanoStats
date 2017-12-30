@@ -139,12 +139,20 @@ const styles = StyleSheet.create({
 
 const HashrateUnits = {
   ETH: 'Mh/s',
-  SIA: 'Mh/s,'
+  SIA: 'Mh/s',
+  ETC: 'Mh/s',
+  ZEC: 'Sol/s',
+  XMR: 'H/s',
+  PASC: 'MH/s',
 }
 
 const HashrateShareFactors = {
   ETH: 8.5,
   SIA: 86,
+  ETC: 8.5,
+  ZEC: 5.64,
+  XMR: 53,
+  PASC: 58,
 }
 
 class HomeScreen extends React.Component {
@@ -434,6 +442,15 @@ class NewAddressScreen extends React.Component {
           console.log('Error parsing new address string')
           console.log(e);
         }
+
+
+        if (! parsed){
+          //invalid address
+          //alert invalid address
+          
+          return
+        }
+
         newPair = {cryptocurrency: this.state.cryptocurrency,address: (parsed == -1)? this.state.newAddress: parsed,name: this.state.name};
         
         //if there is already a pair array
@@ -485,6 +502,10 @@ class NewAddressScreen extends React.Component {
             onValueChange={(itemValue,itemIndex) => this.setState({'cryptocurrency': itemValue})}>
             <Picker.Item label={'Ethereum'} value={'ETH'}/>
             <Picker.Item label={'Siacoin'} value={'SIA'}/>
+            <Picker.Item label={'Ethereum Classic'} value={'ETC'}/>
+            <Picker.Item label={'ZCash'} value={'ZEC'}/>
+            <Picker.Item label={'Monero'} value={'XMR'}/>
+            <Picker.Item label={'Pascal'} value={'PASC'}/>
           </Picker>
           <TextInput  
               style={styles.cardText, styles.cardTextInput}
@@ -1021,7 +1042,7 @@ class MiningChart extends React.Component {
          </View>
           : <Text>{'Fetching...'}</Text>
         }
-        {(this.props.data &&  this.props.cryptocurrency == 'ETH' )? 
+        {(this.props.data && (this.props.cryptocurrency == 'ETH' || this.props.cryptocurrency == 'ETC') )? 
         <View style={{flex:1}}>
         <Text style={styles.cardItemHeading}>Reported Hashrate</Text>
         <BarChart
