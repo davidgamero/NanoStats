@@ -275,6 +275,11 @@ class HomeScreen extends React.Component {
             //if the address list is blank
             AsyncStorage.setItem('@DatStore:addresses',JSON.stringify(d));
 
+            //put the pairs into the array
+            this.setState({
+              pairs: d,
+            });
+
           }    
         }).catch(error => {
           console.log(error);
@@ -359,8 +364,10 @@ class HomeScreen extends React.Component {
     navigate('AddressStats',pair);
   }
 
+  @autobind
   _onRefresh(){
     console.log('tryna refresh');
+    this.fetchData();
   }
 
   render() {
