@@ -5,7 +5,7 @@
     "slug": "nanostats",
     "privacy": "public",
     "sdkVersion": "19.0.0",
-    "version": "0.1.1",
+    "version": "0.1.2",
     "primaryColor": "#cccccc",
     "icon": "./assets/icons/app-icon.png",
     "loading": {
@@ -18,7 +18,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier":"com.davidgamero.nanostats",
-      "buildNumber":"2"
+      "buildNumber":"3"
     },
     "android": {
     	"package": "com.davidgamero.nanostats"

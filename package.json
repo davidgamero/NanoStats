@@ -1,6 +1,6 @@
 {
   "name": "NanoStats",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "private": true,
   "devDependencies": {
     "react-native-scripts": "0.0.40",

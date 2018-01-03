@@ -511,6 +511,7 @@ class NewAddressScreen extends React.Component {
               style={styles.cardText, styles.cardTextInput}
               placeholder={'Address or Nanopool URL'}
               onChangeText={(address) => this.setState({'newAddress': address})}
+              onSubmitEditing={() => this.saveNewAddressAndHome()}
             />
         </View>
         <View style={styles.homeNewAddressButton}>
